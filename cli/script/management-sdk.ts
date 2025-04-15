@@ -9,6 +9,7 @@ import superagent = require("superagent");
 import * as recursiveFs from "recursive-fs";
 import * as yazl from "yazl";
 import slash = require("slash");
+import qs = require('qs');
 
 import Promise = Q.Promise;
 
@@ -40,6 +41,18 @@ interface PackageFile {
   path: string;
 }
 
+interface AppcircleTokenResponse {
+  access_token: string;
+  expires_in: number;
+  refresh_expires_in: number;
+  refresh_token: string;
+  token_type: string;
+  id_token: string;
+  "not-before-policy": string;
+  session_state: string;
+  scope: string
+}
+
 // A template string tag function that URL encodes the substituted values
 function urlEncode(strings: string[], ...values: string[]): string {
   let result = "";
@@ -58,7 +71,8 @@ class AccountManager {
     OWNER: "Owner",
     COLLABORATOR: "Collaborator",
   };
-  public static SERVER_URL = "http://localhost:3000";
+  public static SERVER_URL ="https://my-api.appcircle.io/codepush" //"http://my-api.appcircle.io.127.0.0.1.nip.io/codepush";
+  public static AUTH_URL = "http://auth.appcircle.io"; //"http://auth.appcircle.io.127.0.0.1.nip.io"
 
   private static API_VERSION: number = 2;
 
@@ -69,43 +83,81 @@ class AccountManager {
   public static ERROR_UNAUTHORIZED = 401;
 
   private _accessKey: string;
+  private _pat: string;
   private _serverUrl: string;
+  private _authUrl: string;
   private _customHeaders: Headers;
 
-  constructor(accessKey: string, customHeaders?: Headers, serverUrl?: string) {
-    if (!accessKey) throw new Error("An access key must be specified.");
+  constructor(accessKey:string, pat:string, customHeaders?: Headers, serverUrl?: string, authUrl?: string) {
+    if (!accessKey && !pat ) throw new Error("An access key or PAT must be specified.");
 
-    this._accessKey = accessKey;
+    this._accessKey = accessKey ||"";
+    this._pat = pat || "";
     this._customHeaders = customHeaders;
     this._serverUrl = serverUrl || AccountManager.SERVER_URL;
+    this._authUrl = authUrl || AccountManager.AUTH_URL;
   }
+  
 
   public get accessKey(): string {
     return this._accessKey;
   }
 
+  private loginToAppcircleWithPAT(): Promise<string>{
+    return Promise<string>((resolve,reject) => {
+      if(!this._accessKey){
+        const request : superagent.Request<any> = superagent.post(`${this._authUrl}${urlEncode([`/auth/v1/token`])}`);
+        const data = qs.stringify({
+          pat: this._pat
+        });
+        request.set("Accept", 'application/json');
+        request.set("Content-Type",'application/x-www-form-urlencoded')
+        request
+            .send(data)
+  
+        request.end((err: any, res: superagent.Response) => {
+          if (err) {
+            reject(this.getCodePushError(err, res));
+            return;
+          }
+          resolve(res.body.access_token)
+          return;
+        });
+      }
+      else {
+        resolve(this._accessKey);
+      }
+    })
+  }
+
   public isAuthenticated(throwIfUnauthorized?: boolean): Promise<boolean> {
-    return Promise<any>((resolve, reject, notify) => {
-      const request: superagent.Request<any> = superagent.get(`${this._serverUrl}${urlEncode(["/authenticated"])}`);
-      this.attachCredentials(request);
+      const accessTokenPromise = this.loginToAppcircleWithPAT();
+      return accessTokenPromise.then(appcircleAccessToken => {
+        this._accessKey = appcircleAccessToken;
+        return Promise<any>(async (resolve, reject, notify) => {
+          const request: superagent.Request<any> = superagent.get(`${this._serverUrl}${urlEncode(["/authenticated"])}`);
+          this.attachCredentials(request);
+    
+          request.end((err: any, res: superagent.Response) => {
+            const status: number = this.getErrorStatus(err, res);
+            if (err && status !== AccountManager.ERROR_UNAUTHORIZED) {
+              reject(this.getCodePushError(err, res));
+              return;
+            }
+    
+            const authenticated: boolean = status === 200;
+    
+            if (!authenticated && throwIfUnauthorized) {
+              reject(this.getCodePushError(err, res));
+              return;
+            }
+    
+            resolve(authenticated);
+          });
+        });
+      })
 
-      request.end((err: any, res: superagent.Response) => {
-        const status: number = this.getErrorStatus(err, res);
-        if (err && status !== AccountManager.ERROR_UNAUTHORIZED) {
-          reject(this.getCodePushError(err, res));
-          return;
-        }
-
-        const authenticated: boolean = status === 200;
-
-        if (!authenticated && throwIfUnauthorized) {
-          reject(this.getCodePushError(err, res));
-          return;
-        }
-
-        resolve(authenticated);
-      });
-    });
+      
   }
 
   public addAccessKey(friendlyName: string, ttl?: number): Promise<AccessKey> {
@@ -119,7 +171,7 @@ class AccountManager {
       ttl,
     };
 
-    return this.post(urlEncode(["/accessKeys/"]), JSON.stringify(accessKeyRequest), /*expectResponseBody=*/ true).then(
+    return this.post(urlEncode(["/accessKeys"]), JSON.stringify(accessKeyRequest), /*expectResponseBody=*/ true).then(
       (response: JsonResponse) => {
         return {
           createdTime: response.body.accessKey.createdTime,
@@ -218,7 +270,7 @@ class AccountManager {
 
   public addApp(appName: string): Promise<App> {
     const app: App = { name: appName };
-    return this.post(urlEncode(["/apps/"]), JSON.stringify(app), /*expectResponseBody=*/ false).then(() => app);
+    return this.post(urlEncode(["/apps"]), JSON.stringify(app), /*expectResponseBody=*/ false).then(() => app);
   }
 
   public removeApp(appName: string): Promise<void> {
@@ -255,7 +307,7 @@ class AccountManager {
   // Deployments
   public addDeployment(appName: string, deploymentName: string, deploymentKey?: string): Promise<Deployment> {
     const deployment = <Deployment>{ name: deploymentName, key: deploymentKey };
-    return this.post(urlEncode([`/apps/${appName}/deployments/`]), JSON.stringify(deployment), /*expectResponseBody=*/ true).then(
+    return this.post(urlEncode([`/apps/${appName}/deployments`]), JSON.stringify(deployment), /*expectResponseBody=*/ true).then(
       (res: JsonResponse) => res.body.deployment
     );
   }
@@ -265,7 +317,7 @@ class AccountManager {
   }
 
   public getDeployments(appName: string): Promise<Deployment[]> {
-    return this.get(urlEncode([`/apps/${appName}/deployments/`])).then((res: JsonResponse) => res.body.deployments);
+    return this.get(urlEncode([`/apps/${appName}/deployments`])).then((res: JsonResponse) => res.body.deployments);
   }
 
   public getDeployment(appName: string, deploymentName: string): Promise<Deployment> {

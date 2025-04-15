@@ -1136,8 +1136,10 @@ export function createCommand(): cli.ICommand {
 
         const loginCommand = <cli.ILoginCommand>cmd;
 
-        loginCommand.serverUrl = getServerUrl(arg1);
-        loginCommand.accessKey = argv["accessKey"] as any;
+        loginCommand.serverUrl = getServerUrl(argv["serverUrl"] as string);
+        loginCommand.authUrl = getServerUrl(argv["authUrl"] as string);
+        loginCommand.pat = argv["accessKey"] as any;
+
         break;
 
       case "logout":

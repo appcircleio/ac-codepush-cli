@@ -146,7 +146,8 @@ export interface ILinkCommand extends ICommand {
 
 export interface ILoginCommand extends ICommand {
   serverUrl?: string;
-  accessKey: string;
+  authUrl?:string;
+  pat: string;
 }
 
 export interface IPackageInfo {

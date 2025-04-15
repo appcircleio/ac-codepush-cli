@@ -68,7 +68,8 @@ interface ILegacyLoginConnectionInfo {
 
 interface ILoginConnectionInfo {
   accessKey: string;
-  customServerUrl?: string; // A custom serverUrl for internal debugging purposes
+  customServerUrl?: string; // A custom serverUrl for internal debugging purposes or self-hosted releases
+  customAuthUrl?: string; // A custom serverUrl for internal debugging purposes or self-hosted releases
   preserveAccessKeyOnLogout?: boolean;
 }
 
@@ -458,7 +459,7 @@ export function execute(command: cli.ICommand) {
           );
         }
 
-        sdk = getSdk(connectionInfo.accessKey, CLI_HEADERS, connectionInfo.customServerUrl);
+        sdk = getSdk(connectionInfo.accessKey, null,CLI_HEADERS, connectionInfo.customServerUrl, connectionInfo.customAuthUrl);
         break;
     }
 
@@ -590,22 +591,21 @@ function link(command: cli.ILinkCommand): Promise<void> {
 
 function login(command: cli.ILoginCommand): Promise<void> {
   // Check if one of the flags were provided.
-  if (command.accessKey) {
-    sdk = getSdk(command.accessKey, CLI_HEADERS, command.serverUrl);
+  if (command.pat) {
+    sdk = getSdk(null, command.pat, CLI_HEADERS, command.serverUrl, command.authUrl);
     return sdk.isAuthenticated().then((isAuthenticated: boolean): void => {
       if (isAuthenticated) {
-        serializeConnectionInfo(command.accessKey, /*preserveAccessKeyOnLogout*/ true, command.serverUrl);
+        serializeConnectionInfo(sdk.accessKey, /*preserveAccessKeyOnLogout*/ true, command.serverUrl, command.authUrl);
       } else {
         throw new Error("Invalid access key.");
       }
     });
   } else {
-    return loginWithExternalAuthentication("login", command.serverUrl);
+    return loginWithExternalAuthentication("login", command.serverUrl, command.authUrl);
   }
 }
 
-function loginWithExternalAuthentication(action: string, serverUrl?: string): Promise<void> {
-  initiateExternalAuthenticationAsync(action, serverUrl);
+function loginWithExternalAuthentication(action: string, serverUrl?: string, authUrl?: string): Promise<void> {
   log(""); // Insert newline
 
   return requestAccessKey().then((accessKey: string): Promise<void> => {
@@ -614,11 +614,11 @@ function loginWithExternalAuthentication(action: string, serverUrl?: string): Pr
       return;
     }
 
-    sdk = getSdk(accessKey, CLI_HEADERS, serverUrl);
+    sdk = getSdk(accessKey, null, CLI_HEADERS, serverUrl, authUrl);
 
     return sdk.isAuthenticated().then((isAuthenticated: boolean): void => {
       if (isAuthenticated) {
-        serializeConnectionInfo(accessKey, /*preserveAccessKeyOnLogout*/ false, serverUrl);
+        serializeConnectionInfo(accessKey, /*preserveAccessKeyOnLogout*/ false, serverUrl, authUrl);
       } else {
         throw new Error("Invalid access key.");
       }
@@ -1492,13 +1492,17 @@ export const runReactNativeBundleCommand = (
   });
 };
 
-function serializeConnectionInfo(accessKey: string, preserveAccessKeyOnLogout: boolean, customServerUrl?: string): void {
+function serializeConnectionInfo(accessKey: string, preserveAccessKeyOnLogout: boolean, customServerUrl?: string, customAuthUrl?: string): void {
   const connectionInfo: ILoginConnectionInfo = {
     accessKey: accessKey,
     preserveAccessKeyOnLogout: preserveAccessKeyOnLogout,
   };
   if (customServerUrl) {
     connectionInfo.customServerUrl = customServerUrl;
+  }
+
+  if(customAuthUrl){
+    connectionInfo.customAuthUrl = customAuthUrl;
   }
 
   const json: string = JSON.stringify(connectionInfo);
@@ -1578,8 +1582,8 @@ function isCommandOptionSpecified(option: any): boolean {
   return option !== undefined && option !== null;
 }
 
-function getSdk(accessKey: string, headers: Headers, customServerUrl: string): AccountManager {
-  const sdk: any = new AccountManager(accessKey, CLI_HEADERS, customServerUrl);
+function getSdk(accessKey: string, pat:string, headers: Headers, customServerUrl: string, customAuthUrl: string): AccountManager {
+  const sdk: any = new AccountManager(accessKey, pat, CLI_HEADERS, customServerUrl, customAuthUrl);
   /*
    * If the server returns `Unauthorized`, it must be due to an invalid
    * (or expired) access key. For convenience, we patch every SDK call
