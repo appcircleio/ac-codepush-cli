@@ -9,7 +9,7 @@ import parseDuration = require("parse-duration");
 
 const packageJson = require("../../package.json");
 const ROLLOUT_PERCENTAGE_REGEX: RegExp = /^(100|[1-9][0-9]|[1-9])%?$/;
-const USAGE_PREFIX = "Usage: code-push-standalone";
+const USAGE_PREFIX = "Usage: appcircle-code-push";
 
 // Command categories are:  access-key, app, release, deployment, deployment-key, login, logout, register
 let isValidCommandCategory = false;
@@ -438,6 +438,22 @@ yargs
         demand: false,
         description:
           "Access key to authenticate against the CodePush server with, instead of providing your username and password credentials",
+        type: "string",
+      })
+      .option("serverUrl", {
+        alias: null,
+        default: "https://api.appcircle.io/codepush",
+        demand: false,
+        description:
+        "The base URL of the CodePush server you want to connect to. Example: https://api-my.server.appcircle.io",
+        type: "string",
+      })
+      .option("authUrl", {
+        alias: null,
+        default: "https://auth.appcircle.io",
+        demand: false,
+        description:
+        "The authentication endpoint base URL used to obtain access tokens. Example: https://auth-my.server.appcircle.io",
         type: "string",
       })
       .check((argv: any, aliases: { [aliases: string]: string }): any => isValidCommand); // Report unrecognized, non-hyphenated command category.

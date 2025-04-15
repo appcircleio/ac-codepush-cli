@@ -1,5 +1,5 @@
 {
-  "name": "code-push-cli",
+  "name": "appcircle-code-push-cli",
   "version": "0.0.1",
   "description": "Management CLI for the CodePush service",
   "main": "./script/cli.js",
@@ -11,7 +11,7 @@
     "lint:fix": "npx eslint ./script/**/*.ts --fix"
   },
   "bin": {
-    "code-push-standalone": "./bin/script/cli.js"
+    "appcircle-code-push": "./bin/script/cli.js"
   },
   "repository": {
     "type": "git",

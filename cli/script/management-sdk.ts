@@ -71,8 +71,8 @@ class AccountManager {
     OWNER: "Owner",
     COLLABORATOR: "Collaborator",
   };
-  public static SERVER_URL ="https://my-api.appcircle.io/codepush" //"http://my-api.appcircle.io.127.0.0.1.nip.io/codepush";
-  public static AUTH_URL = "http://auth.appcircle.io"; //"http://auth.appcircle.io.127.0.0.1.nip.io"
+  public static SERVER_URL ="https://api.appcircle.io/codepush"
+  public static AUTH_URL = "https://auth.appcircle.io"; 
 
   private static API_VERSION: number = 2;
 
