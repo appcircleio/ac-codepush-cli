@@ -18,7 +18,11 @@
     "type": "git",
     "url": "https://github.com/appcircleio/ac-codepush-cli"
   },
-  "author": "Microsoft",
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": "Appcircle",
+  "license": "MIT",
   "dependencies": {
     "backslash": "^0.2.0",
     "chalk": "^4.1.2",
