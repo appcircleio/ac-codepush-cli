@@ -1,6 +1,6 @@
 {
   "name": "@appcircle/codepush-cli",
-  "version": "0.0.1",
+  "version": "0.0.1-alpha.1",
   "description": "Management CLI for the CodePush service",
   "main": "./script/cli.js",
   "scripts": {
@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/code-push-server"
+    "url": "https://github.com/appcircleio/ac-codepush-cli"
   },
   "author": "Microsoft",
   "dependencies": {
