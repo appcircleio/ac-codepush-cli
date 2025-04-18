@@ -1,3 +1,8 @@
+> ⚠️ **Notice**  
+> This NPM package is a fork of the original GitHub repository.  
+> The implementation has been modified and may differ from the original.  
+> Documentation is currently being updated to reflect these changes.
+
 # CodePush CLI
 
 The CodePush CLI is a Node.js application that allows users to interact with CodePush Server.

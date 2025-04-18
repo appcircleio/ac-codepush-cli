@@ -1,4 +1,4 @@
-# Contributing to Appcircle Codepusg Command Line Interface
+# Contributing to Appcircle Codepush Command Line Interface
 
 ## Table of Contents
 
