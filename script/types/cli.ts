@@ -34,8 +34,7 @@ export enum CommandType {
   releaseReact,
   rollback,
   sessionList,
-  sessionRemove,
-  whoami,
+  sessionRemove
 }
 
 export interface ICommand {

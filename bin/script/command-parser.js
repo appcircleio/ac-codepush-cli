@@ -762,15 +762,6 @@ yargs
         .check((argv, aliases) => isValidCommand); // Report unrecognized, non-hyphenated command category.
     addCommonConfiguration(yargs);
 })
-    .command("whoami", "Display the account info for the current login session", (yargs) => {
-    isValidCommandCategory = true;
-    isValidCommand = true;
-    yargs
-        .usage(USAGE_PREFIX + " whoami")
-        .demand(/*count*/ 0, /*max*/ 0)
-        .example("whoami", "Display the account info for the current login session");
-    addCommonConfiguration(yargs);
-})
     .alias("v", "version")
     .version(packageJson.version)
     .wrap(/*columnLimit*/ null)
@@ -1082,9 +1073,6 @@ function createCommand() {
                         }
                         break;
                 }
-                break;
-            case "whoami":
-                cmd = { type: cli.CommandType.whoami };
                 break;
         }
         return cmd;

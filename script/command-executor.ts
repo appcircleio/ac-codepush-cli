@@ -554,9 +554,6 @@ export function execute(command: cli.ICommand) {
       case cli.CommandType.sessionRemove:
         return sessionRemove(<cli.ISessionRemoveCommand>command);
 
-      case cli.CommandType.whoami:
-        return whoami(command);
-
       default:
         // We should never see this message as invalid commands should be caught by the argument parser.
         throw new Error("Invalid command:  " + JSON.stringify(command));
@@ -1570,6 +1567,7 @@ function throwForInvalidOutputFormat(format: string): void {
   }
 }
 
+// DEPRECATED
 function whoami(command: cli.ICommand): Promise<void> {
   return sdk.getAccountInfo().then((account): void => {
     const accountInfo = `${account.email} (${account.linkedProviders.join(", ")})`;

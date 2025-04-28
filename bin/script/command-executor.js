@@ -416,8 +416,6 @@ function execute(command) {
                 return sessionList(command);
             case cli.CommandType.sessionRemove:
                 return sessionRemove(command);
-            case cli.CommandType.whoami:
-                return whoami(command);
             default:
                 // We should never see this message as invalid commands should be caught by the argument parser.
                 throw new Error("Invalid command:  " + JSON.stringify(command));
@@ -1254,6 +1252,7 @@ function throwForInvalidOutputFormat(format) {
             throw new Error("Invalid format:  " + format + ".");
     }
 }
+// DEPRECATED
 function whoami(command) {
     return exports.sdk.getAccountInfo().then((account) => {
         const accountInfo = `${account.email} (${account.linkedProviders.join(", ")})`;

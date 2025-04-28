@@ -58,11 +58,6 @@ appcircle-code-push login <optional: server-url> <optional: auth-url>
 
 This will launch a browser, asking you to authenticate with either your GitHub or Microsoft account. This will generate an access key that you need to copy/paste into the CLI (it will prompt you for it). You are now successfully authenticated and can safely close your browser window.
 
-If at any time you want to determine if you're already logged in, you can run the following command to display the e-mail address associated with your current authentication session, which identity providers your account is linked to (e.g. GitHub):
-
-```shell
-appcircle-code-push whoami
-```
 
 When you login from the CLI, your access key is persisted to disk for the duration of your session so that you don't have to login every time you attempt to access your account. In order to end your session and delete this access key, simply run the following command:
 

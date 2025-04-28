@@ -36,5 +36,4 @@ var CommandType;
     CommandType[CommandType["rollback"] = 28] = "rollback";
     CommandType[CommandType["sessionList"] = 29] = "sessionList";
     CommandType[CommandType["sessionRemove"] = 30] = "sessionRemove";
-    CommandType[CommandType["whoami"] = 31] = "whoami";
 })(CommandType || (exports.CommandType = CommandType = {}));
