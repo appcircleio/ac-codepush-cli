@@ -334,28 +334,6 @@ yargs
 
     addCommonConfiguration(yargs);
   })
-  .command("collaborator", "View and manage app collaborators", (yargs: yargs.Argv) => {
-    isValidCommandCategory = true;
-    yargs
-      .usage(USAGE_PREFIX + " collaborator <command>")
-      .demand(/*count*/ 2, /*max*/ 2) // Require exactly two non-option arguments.
-      .command("add", "Add a new collaborator to an app", (yargs: yargs.Argv): void => {
-        isValidCommand = true;
-        yargs
-          .usage(USAGE_PREFIX + " collaborator add <appName> <email>")
-          .demand(/*count*/ 2, /*max*/ 2) // Require exactly two non-option arguments
-          .example("collaborator add MyApp foo@bar.com", 'Adds foo@bar.com as a collaborator to app "MyApp"');
-
-        addCommonConfiguration(yargs);
-      })
-      .command("remove", "Remove a collaborator from an app", (yargs: yargs.Argv) => removeCollaborator("remove", yargs))
-      .command("rm", "Remove a collaborator from an app", (yargs: yargs.Argv) => removeCollaborator("rm", yargs))
-      .command("list", "List the collaborators for an app", (yargs: yargs.Argv) => listCollaborators("list", yargs))
-      .command("ls", "List the collaborators for an app", (yargs: yargs.Argv) => listCollaborators("ls", yargs))
-      .check((argv: any, aliases: { [aliases: string]: string }): any => isValidCommand); // Report unrecognized, non-hyphenated command category.
-
-    addCommonConfiguration(yargs);
-  })
   .command("debug", "View the CodePush debug logs for a running app", (yargs: yargs.Argv) => {
     isValidCommandCategory = true;
     isValidCommand = true;
@@ -993,50 +971,6 @@ export function createCommand(): cli.ICommand {
 
               appRenameCommand.currentAppName = arg2;
               appRenameCommand.newAppName = arg3;
-            }
-            break;
-
-          case "transfer":
-            if (arg2 && arg3) {
-              cmd = { type: cli.CommandType.appTransfer };
-
-              const appTransferCommand = <cli.IAppTransferCommand>cmd;
-
-              appTransferCommand.appName = arg2;
-              appTransferCommand.email = arg3;
-            }
-            break;
-        }
-        break;
-
-      case "collaborator":
-        switch (arg1) {
-          case "add":
-            if (arg2 && arg3) {
-              cmd = { type: cli.CommandType.collaboratorAdd };
-
-              (<cli.ICollaboratorAddCommand>cmd).appName = arg2;
-              (<cli.ICollaboratorAddCommand>cmd).email = arg3;
-            }
-            break;
-
-          case "list":
-          case "ls":
-            if (arg2) {
-              cmd = { type: cli.CommandType.collaboratorList };
-
-              (<cli.ICollaboratorListCommand>cmd).appName = arg2;
-              (<cli.ICollaboratorListCommand>cmd).format = argv["format"] as any;
-            }
-            break;
-
-          case "remove":
-          case "rm":
-            if (arg2 && arg3) {
-              cmd = { type: cli.CommandType.collaboratorRemove };
-
-              (<cli.ICollaboratorRemoveCommand>cmd).appName = arg2;
-              (<cli.ICollaboratorAddCommand>cmd).email = arg3;
             }
             break;
         }

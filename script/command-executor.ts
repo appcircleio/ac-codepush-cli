@@ -488,18 +488,6 @@ export function execute(command: cli.ICommand) {
       case cli.CommandType.appRename:
         return appRename(<cli.IAppRenameCommand>command);
 
-      case cli.CommandType.appTransfer:
-        return appTransfer(<cli.IAppTransferCommand>command);
-
-      case cli.CommandType.collaboratorAdd:
-        return addCollaborator(<cli.ICollaboratorAddCommand>command);
-
-      case cli.CommandType.collaboratorList:
-        return listCollaborators(<cli.ICollaboratorListCommand>command);
-
-      case cli.CommandType.collaboratorRemove:
-        return removeCollaborator(<cli.ICollaboratorRemoveCommand>command);
-
       case cli.CommandType.debug:
         return debugCommand(<cli.IDebugCommand>command);
 

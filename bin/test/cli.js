@@ -482,68 +482,6 @@ describe("CLI", () => {
             done();
         });
     });
-    it("appTransfer transfers app", (done) => {
-        var command = {
-            type: cli.CommandType.appTransfer,
-            appName: "a",
-            email: "b@b.com",
-        };
-        var transferApp = sandbox.spy(cmdexec.sdk, "transferApp");
-        cmdexec.execute(command).done(() => {
-            sinon.assert.calledOnce(transferApp);
-            sinon.assert.calledOnce(log);
-            sinon.assert.calledWithExactly(log, 'Successfully transferred the ownership of app "a" to the account with email "b@b.com".');
-            done();
-        });
-    });
-    it("collaboratorAdd adds collaborator", (done) => {
-        var command = {
-            type: cli.CommandType.collaboratorAdd,
-            appName: "a",
-            email: "b@b.com",
-        };
-        var addCollaborator = sandbox.spy(cmdexec.sdk, "addCollaborator");
-        cmdexec.execute(command).done(() => {
-            sinon.assert.calledOnce(addCollaborator);
-            sinon.assert.calledOnce(log);
-            sinon.assert.calledWithExactly(log, 'Successfully added "b@b.com" as a collaborator to the app "a".');
-            done();
-        });
-    });
-    it("collaboratorList lists collaborators email and properties", (done) => {
-        var command = {
-            type: cli.CommandType.collaboratorList,
-            appName: "a",
-            format: "json",
-        };
-        cmdexec.execute(command).done(() => {
-            sinon.assert.calledOnce(log);
-            assert.equal(log.args[0].length, 1);
-            var actual = log.args[0][0];
-            var expected = {
-                collaborators: {
-                    "a@a.com": { permission: "Owner", isCurrentAccount: true },
-                    "b@b.com": { permission: "Collaborator", isCurrentAccount: false },
-                },
-            };
-            assertJsonDescribesObject(actual, expected);
-            done();
-        });
-    });
-    it("collaboratorRemove removes collaborator", (done) => {
-        var command = {
-            type: cli.CommandType.collaboratorRemove,
-            appName: "a",
-            email: "b@b.com",
-        };
-        var removeCollaborator = sandbox.spy(cmdexec.sdk, "removeCollaborator");
-        cmdexec.execute(command).done(() => {
-            sinon.assert.calledOnce(removeCollaborator);
-            sinon.assert.calledOnce(log);
-            sinon.assert.calledWithExactly(log, 'Successfully removed "b@b.com" as a collaborator from the app "a".');
-            done();
-        });
-    });
     it("deploymentAdd reports new app name and ID", (done) => {
         var command = {
             type: cli.CommandType.deploymentAdd,

@@ -372,14 +372,6 @@ function execute(command) {
                 return appRemove(command);
             case cli.CommandType.appRename:
                 return appRename(command);
-            case cli.CommandType.appTransfer:
-                return appTransfer(command);
-            case cli.CommandType.collaboratorAdd:
-                return addCollaborator(command);
-            case cli.CommandType.collaboratorList:
-                return listCollaborators(command);
-            case cli.CommandType.collaboratorRemove:
-                return removeCollaborator(command);
             case cli.CommandType.debug:
                 return (0, debug_1.default)(command);
             case cli.CommandType.deploymentAdd:

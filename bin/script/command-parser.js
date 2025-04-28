@@ -279,26 +279,6 @@ yargs
         .check((argv, aliases) => isValidCommand); // Report unrecognized, non-hyphenated command category.
     addCommonConfiguration(yargs);
 })
-    .command("collaborator", "View and manage app collaborators", (yargs) => {
-    isValidCommandCategory = true;
-    yargs
-        .usage(USAGE_PREFIX + " collaborator <command>")
-        .demand(/*count*/ 2, /*max*/ 2) // Require exactly two non-option arguments.
-        .command("add", "Add a new collaborator to an app", (yargs) => {
-        isValidCommand = true;
-        yargs
-            .usage(USAGE_PREFIX + " collaborator add <appName> <email>")
-            .demand(/*count*/ 2, /*max*/ 2) // Require exactly two non-option arguments
-            .example("collaborator add MyApp foo@bar.com", 'Adds foo@bar.com as a collaborator to app "MyApp"');
-        addCommonConfiguration(yargs);
-    })
-        .command("remove", "Remove a collaborator from an app", (yargs) => removeCollaborator("remove", yargs))
-        .command("rm", "Remove a collaborator from an app", (yargs) => removeCollaborator("rm", yargs))
-        .command("list", "List the collaborators for an app", (yargs) => listCollaborators("list", yargs))
-        .command("ls", "List the collaborators for an app", (yargs) => listCollaborators("ls", yargs))
-        .check((argv, aliases) => isValidCommand); // Report unrecognized, non-hyphenated command category.
-    addCommonConfiguration(yargs);
-})
     .command("debug", "View the CodePush debug logs for a running app", (yargs) => {
     isValidCommandCategory = true;
     isValidCommand = true;
@@ -845,41 +825,6 @@ function createCommand() {
                             const appRenameCommand = cmd;
                             appRenameCommand.currentAppName = arg2;
                             appRenameCommand.newAppName = arg3;
-                        }
-                        break;
-                    case "transfer":
-                        if (arg2 && arg3) {
-                            cmd = { type: cli.CommandType.appTransfer };
-                            const appTransferCommand = cmd;
-                            appTransferCommand.appName = arg2;
-                            appTransferCommand.email = arg3;
-                        }
-                        break;
-                }
-                break;
-            case "collaborator":
-                switch (arg1) {
-                    case "add":
-                        if (arg2 && arg3) {
-                            cmd = { type: cli.CommandType.collaboratorAdd };
-                            cmd.appName = arg2;
-                            cmd.email = arg3;
-                        }
-                        break;
-                    case "list":
-                    case "ls":
-                        if (arg2) {
-                            cmd = { type: cli.CommandType.collaboratorList };
-                            cmd.appName = arg2;
-                            cmd.format = argv["format"];
-                        }
-                        break;
-                    case "remove":
-                    case "rm":
-                        if (arg2 && arg3) {
-                            cmd = { type: cli.CommandType.collaboratorRemove };
-                            cmd.appName = arg2;
-                            cmd.email = arg3;
                         }
                         break;
                 }
