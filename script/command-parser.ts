@@ -146,6 +146,16 @@ function appRemove(commandName: string, yargs: yargs.Argv): void {
   addCommonConfiguration(yargs);
 }
 
+function appDeploymentKeyList(commandName: string, yargs: yargs.Argv): void {
+  isValidCommand = true;
+  yargs
+    .usage(USAGE_PREFIX + " app " + commandName + " <appName>")
+    .demand(/*count*/ 1, /*max*/ 1) // Require exactly one non-option arguments
+    .example("app " + commandName + " MyApp", 'Lists the deployment keys for app "MyApp" in tabular format');
+
+  addCommonConfiguration(yargs);
+}
+
 function listCollaborators(commandName: string, yargs: yargs.Argv): void {
   isValidCommand = true;
   yargs
@@ -321,6 +331,7 @@ yargs
       })
       .command("list", "Lists the apps associated with your account", (yargs: yargs.Argv) => appList("list", yargs))
       .command("ls", "Lists the apps associated with your account", (yargs: yargs.Argv) => appList("ls", yargs))
+      .command("deployment-keys","Lists the deployment keys for app", (yargs:yargs.Argv) => appDeploymentKeyList("deployment-keys", yargs))
       .command("transfer", "Transfer the ownership of an app to another account", (yargs: yargs.Argv) => {
         isValidCommand = true;
         yargs
@@ -953,7 +964,10 @@ export function createCommand(): cli.ICommand {
 
             (<cli.IAppListCommand>cmd).format = argv["format"] as any;
             break;
-
+          case "deployment-keys":
+            cmd = {type : cli.CommandType.appDeploymentKeyList};
+            (<cli.IAppDeploymentKeysCommand>cmd).appName = arg2;
+            break;
           case "remove":
           case "rm":
             if (arg2) {

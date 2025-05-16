@@ -49,6 +49,7 @@ import {
   isBinaryOrZip,
   fileExists
 } from "./utils/file-utils";
+import { DeploymentKey } from "./types/rest-definitions";
 
 const configFilePath: string = path.join(process.env.LOCALAPPDATA || process.env.HOME, ".code-push.config");
 const emailValidator = require("email-validator");
@@ -193,6 +194,12 @@ function appList(command: cli.IAppListCommand): Promise<void> {
   let apps: App[];
   return sdk.getApps().then((retrievedApps: App[]): void => {
     printAppList(command.format, retrievedApps);
+  });
+}
+
+function appDeploymentKeyList(command: cli.IAppDeploymentKeysCommand): Promise<void> {
+  return sdk.getDeploymentKeys(command.appName).then((retrievedKeys: DeploymentKey[]): void => {
+    printAppDeploymentKeyList(retrievedKeys);
   });
 }
 
@@ -481,6 +488,9 @@ export function execute(command: cli.ICommand) {
 
       case cli.CommandType.appList:
         return appList(<cli.IAppListCommand>command);
+      
+      case cli.CommandType.appDeploymentKeyList:
+        return appDeploymentKeyList(<cli.IAppDeploymentKeysCommand>command);
 
       case cli.CommandType.appRemove:
         return appRemove(<cli.IAppRemoveCommand>command);
@@ -654,6 +664,16 @@ function printAppList(format: string, apps: App[]): void {
       });
     });
   }
+}
+
+function printAppDeploymentKeyList(deploymentKeys: DeploymentKey[]): void {
+  const headers = ["Name", "Deployment Key"];
+    printTable(headers, (dataSource: any[]): void => {
+      deploymentKeys.forEach((deploymentKey: DeploymentKey, index: number): void => {
+        const row = [deploymentKey.name, wordwrap(50)(deploymentKey.deploymentKey)];
+        dataSource.push(row);
+      });
+    });
 }
 
 function getCollaboratorDisplayName(email: string, collaboratorProperties: CollaboratorProperties): string {

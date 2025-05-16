@@ -127,6 +127,12 @@ export interface Deployment {
 }
 
 /*out*/
+export interface DeploymentKey {
+  /*generated key*/ deploymentKey?: string;
+  /*key*/ name: string;
+}
+
+/*out*/
 export interface BlobInfo {
   size: number;
   url: string;

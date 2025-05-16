@@ -10,6 +10,7 @@ export enum CommandType {
   accessKeyRemove,
   appAdd,
   appList,
+  appDeploymentKeyList,
   appRemove,
   appRename,
   debug,
@@ -67,6 +68,10 @@ export interface IAppListCommand extends ICommand {
 }
 
 export interface IAppRemoveCommand extends ICommand {
+  appName: string;
+}
+
+export interface IAppDeploymentKeysCommand extends ICommand {
   appName: string;
 }
 
