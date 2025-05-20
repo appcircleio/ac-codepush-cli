@@ -4,12 +4,9 @@
 import AccountManager = require("../management-sdk");
 
 export enum CommandType {
-  accessKeyAdd,
-  accessKeyPatch,
-  accessKeyList,
-  accessKeyRemove,
   appAdd,
   appList,
+  appDeploymentKeyList,
   appRemove,
   appRename,
   debug,
@@ -20,17 +17,13 @@ export enum CommandType {
   deploymentMetrics,
   deploymentRemove,
   deploymentRename,
-  link,
   login,
   logout,
   patch,
   promote,
-  register,
   release,
   releaseReact,
-  rollback,
-  sessionList,
-  sessionRemove
+  rollback
 }
 
 export interface ICommand {
@@ -67,6 +60,10 @@ export interface IAppListCommand extends ICommand {
 }
 
 export interface IAppRemoveCommand extends ICommand {
+  appName: string;
+}
+
+export interface IAppDeploymentKeysCommand extends ICommand {
   appName: string;
 }
 

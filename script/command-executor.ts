@@ -49,6 +49,7 @@ import {
   isBinaryOrZip,
   fileExists
 } from "./utils/file-utils";
+import { DeploymentKey } from "./types/rest-definitions";
 
 const configFilePath: string = path.join(process.env.LOCALAPPDATA || process.env.HOME, ".code-push.config");
 const emailValidator = require("email-validator");
@@ -121,60 +122,6 @@ export const confirm = (message: string = "Are you sure?"): Promise<boolean> => 
   });
 };
 
-function accessKeyAdd(command: cli.IAccessKeyAddCommand): Promise<void> {
-  return sdk.addAccessKey(command.name, command.ttl).then((accessKey: AccessKey) => {
-    log(`Successfully created the "${command.name}" access key: ${accessKey.key}`);
-    log("Make sure to save this key value somewhere safe, since you won't be able to view it from the CLI again!");
-  });
-}
-
-function accessKeyPatch(command: cli.IAccessKeyPatchCommand): Promise<void> {
-  const willUpdateName: boolean = isCommandOptionSpecified(command.newName) && command.oldName !== command.newName;
-  const willUpdateTtl: boolean = isCommandOptionSpecified(command.ttl);
-
-  if (!willUpdateName && !willUpdateTtl) {
-    throw new Error("A new name and/or TTL must be provided.");
-  }
-
-  return sdk.patchAccessKey(command.oldName, command.newName, command.ttl).then((accessKey: AccessKey) => {
-    let logMessage: string = "Successfully ";
-    if (willUpdateName) {
-      logMessage += `renamed the access key "${command.oldName}" to "${command.newName}"`;
-    }
-
-    if (willUpdateTtl) {
-      const expirationDate = moment(accessKey.expires).format("LLLL");
-      if (willUpdateName) {
-        logMessage += ` and changed its expiration date to ${expirationDate}`;
-      } else {
-        logMessage += `changed the expiration date of the "${command.oldName}" access key to ${expirationDate}`;
-      }
-    }
-
-    log(`${logMessage}.`);
-  });
-}
-
-function accessKeyList(command: cli.IAccessKeyListCommand): Promise<void> {
-  throwForInvalidOutputFormat(command.format);
-
-  return sdk.getAccessKeys().then((accessKeys: AccessKey[]): void => {
-    printAccessKeys(command.format, accessKeys);
-  });
-}
-
-function accessKeyRemove(command: cli.IAccessKeyRemoveCommand): Promise<void> {
-  return confirm().then((wasConfirmed: boolean): Promise<void> => {
-    if (wasConfirmed) {
-      return sdk.removeAccessKey(command.accessKey).then((): void => {
-        log(`Successfully removed the "${command.accessKey}" access key.`);
-      });
-    }
-
-    log("Access key removal cancelled.");
-  });
-}
-
 function appAdd(command: cli.IAppAddCommand): Promise<void> {
   return sdk.addApp(command.appName).then((app: App): Promise<void> => {
     log('Successfully added the "' + command.appName + '" app, along with the following default deployments:');
@@ -193,6 +140,12 @@ function appList(command: cli.IAppListCommand): Promise<void> {
   let apps: App[];
   return sdk.getApps().then((retrievedApps: App[]): void => {
     printAppList(command.format, retrievedApps);
+  });
+}
+
+function appDeploymentKeyList(command: cli.IAppDeploymentKeysCommand): Promise<void> {
+  return sdk.getDeploymentKeys(command.appName).then((retrievedKeys: DeploymentKey[]): void => {
+    printAppDeploymentKeyList(retrievedKeys);
   });
 }
 
@@ -439,15 +392,6 @@ export function execute(command: cli.ICommand) {
     switch (command.type) {
       // Must not be logged in
       case cli.CommandType.login:
-      case cli.CommandType.register:
-        if (connectionInfo) {
-          throw new Error("You are already logged in from this machine.");
-        }
-        break;
-
-      // It does not matter whether you are logged in or not
-      case cli.CommandType.link:
-        break;
 
       // Must be logged in
       default:
@@ -464,23 +408,14 @@ export function execute(command: cli.ICommand) {
     }
 
     switch (command.type) {
-      case cli.CommandType.accessKeyAdd:
-        return accessKeyAdd(<cli.IAccessKeyAddCommand>command);
-
-      case cli.CommandType.accessKeyPatch:
-        return accessKeyPatch(<cli.IAccessKeyPatchCommand>command);
-
-      case cli.CommandType.accessKeyList:
-        return accessKeyList(<cli.IAccessKeyListCommand>command);
-
-      case cli.CommandType.accessKeyRemove:
-        return accessKeyRemove(<cli.IAccessKeyRemoveCommand>command);
-
       case cli.CommandType.appAdd:
         return appAdd(<cli.IAppAddCommand>command);
 
       case cli.CommandType.appList:
         return appList(<cli.IAppListCommand>command);
+      
+      case cli.CommandType.appDeploymentKeyList:
+        return appDeploymentKeyList(<cli.IAppDeploymentKeysCommand>command);
 
       case cli.CommandType.appRemove:
         return appRemove(<cli.IAppRemoveCommand>command);
@@ -509,9 +444,6 @@ export function execute(command: cli.ICommand) {
       case cli.CommandType.deploymentRename:
         return deploymentRename(<cli.IDeploymentRenameCommand>command);
 
-      case cli.CommandType.link:
-        return link(<cli.ILinkCommand>command);
-
       case cli.CommandType.login:
         return login(<cli.ILoginCommand>command);
 
@@ -524,9 +456,6 @@ export function execute(command: cli.ICommand) {
       case cli.CommandType.promote:
         return promote(<cli.IPromoteCommand>command);
 
-      case cli.CommandType.register:
-        return register(<cli.IRegisterCommand>command);
-
       case cli.CommandType.release:
         return release(<cli.IReleaseCommand>command);
 
@@ -535,12 +464,6 @@ export function execute(command: cli.ICommand) {
 
       case cli.CommandType.rollback:
         return rollback(<cli.IRollbackCommand>command);
-
-      case cli.CommandType.sessionList:
-        return sessionList(<cli.ISessionListCommand>command);
-
-      case cli.CommandType.sessionRemove:
-        return sessionRemove(<cli.ISessionRemoveCommand>command);
 
       default:
         // We should never see this message as invalid commands should be caught by the argument parser.
@@ -654,6 +577,16 @@ function printAppList(format: string, apps: App[]): void {
       });
     });
   }
+}
+
+function printAppDeploymentKeyList(deploymentKeys: DeploymentKey[]): void {
+  const headers = ["Name", "Deployment Key"];
+    printTable(headers, (dataSource: any[]): void => {
+      deploymentKeys.forEach((deploymentKey: DeploymentKey, index: number): void => {
+        const row = [deploymentKey.name, wordwrap(50)(deploymentKey.deploymentKey)];
+        dataSource.push(row);
+      });
+    });
 }
 
 function getCollaboratorDisplayName(email: string, collaboratorProperties: CollaboratorProperties): string {

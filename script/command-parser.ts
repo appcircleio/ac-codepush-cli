@@ -34,84 +34,6 @@ export function showHelp(showRootDescription?: boolean): void {
   }
 }
 
-function accessKeyAdd(commandName: string, yargs: yargs.Argv): void {
-  isValidCommand = true;
-  yargs
-    .usage(USAGE_PREFIX + " access-key " + commandName + " <accessKeyName>")
-    .demand(/*count*/ 1, /*max*/ 1) // Require exactly one non-option arguments
-    .example(
-      "access-key " + commandName + ' "VSTS Integration"',
-      'Creates a new access key with the name "VSTS Integration", which expires in 60 days'
-    )
-    .example(
-      "access-key " + commandName + ' "One time key" --ttl 5m',
-      'Creates a new access key with the name "One time key", which expires in 5 minutes'
-    )
-    .option("ttl", {
-      default: "60d",
-      demand: false,
-      description: "Duration string which specifies the amount of time that the access key should remain valid for (e.g 5m, 60d, 1y)",
-      type: "string",
-    });
-
-  addCommonConfiguration(yargs);
-}
-
-function accessKeyPatch(commandName: string, yargs: yargs.Argv): void {
-  isValidCommand = true;
-  yargs
-    .usage(USAGE_PREFIX + " access-key " + commandName + " <accessKeyName>")
-    .demand(/*count*/ 1, /*max*/ 1) // Require exactly one non-option arguments
-    .example(
-      "access-key " + commandName + ' "Key for build server" --name "Key for CI machine"',
-      'Renames the access key named "Key for build server" to "Key for CI machine"'
-    )
-    .example(
-      "access-key " + commandName + ' "Key for build server" --ttl 7d',
-      'Updates the access key named "Key for build server" to expire in 7 days'
-    )
-    .option("name", {
-      default: null,
-      demand: false,
-      description: "Display name for the access key",
-      type: "string",
-    })
-    .option("ttl", {
-      default: null,
-      demand: false,
-      description: "Duration string which specifies the amount of time that the access key should remain valid for (e.g 5m, 60d, 1y)",
-      type: "string",
-    });
-  addCommonConfiguration(yargs);
-}
-
-function accessKeyList(commandName: string, yargs: yargs.Argv): void {
-  isValidCommand = true;
-  yargs
-    .usage(USAGE_PREFIX + " access-key " + commandName + " [options]")
-    .demand(/*count*/ 0, /*max*/ 0)
-    .example("access-key " + commandName, "Lists your access keys in tabular format")
-    .example("access-key " + commandName + " --format json", "Lists your access keys in JSON format")
-    .option("format", {
-      default: "table",
-      demand: false,
-      description: 'Output format to display your access keys with ("json" or "table")',
-      type: "string",
-    });
-
-  addCommonConfiguration(yargs);
-}
-
-function accessKeyRemove(commandName: string, yargs: yargs.Argv): void {
-  isValidCommand = true;
-  yargs
-    .usage(USAGE_PREFIX + " access-key " + commandName + " <accessKeyName>")
-    .demand(/*count*/ 1, /*max*/ 1) // Require exactly one non-option arguments
-    .example("access-key " + commandName + ' "VSTS Integration"', 'Removes the "VSTS Integration" access key');
-
-  addCommonConfiguration(yargs);
-}
-
 function addCommonConfiguration(yargs: yargs.Argv): void {
   yargs
     .wrap(/*columnLimit*/ null)
@@ -146,6 +68,16 @@ function appRemove(commandName: string, yargs: yargs.Argv): void {
   addCommonConfiguration(yargs);
 }
 
+function appDeploymentKeyList(commandName: string, yargs: yargs.Argv): void {
+  isValidCommand = true;
+  yargs
+    .usage(USAGE_PREFIX + " app " + commandName + " <appName>")
+    .demand(/*count*/ 1, /*max*/ 1) // Require exactly one non-option arguments
+    .example("app " + commandName + " MyApp", 'Lists the deployment keys for app "MyApp" in tabular format');
+
+  addCommonConfiguration(yargs);
+}
+
 function listCollaborators(commandName: string, yargs: yargs.Argv): void {
   isValidCommand = true;
   yargs
@@ -169,33 +101,6 @@ function removeCollaborator(commandName: string, yargs: yargs.Argv): void {
     .usage(USAGE_PREFIX + " collaborator " + commandName + " <appName> <email>")
     .demand(/*count*/ 2, /*max*/ 2) // Require exactly two non-option arguments
     .example("collaborator " + commandName + " MyApp foo@bar.com", 'Removes foo@bar.com as a collaborator from app "MyApp"');
-
-  addCommonConfiguration(yargs);
-}
-
-function sessionList(commandName: string, yargs: yargs.Argv): void {
-  isValidCommand = true;
-  yargs
-    .usage(USAGE_PREFIX + " session " + commandName + " [options]")
-    .demand(/*count*/ 0, /*max*/ 0)
-    .example("session " + commandName, "Lists your sessions in tabular format")
-    .example("session " + commandName + " --format json", "Lists your login sessions in JSON format")
-    .option("format", {
-      default: "table",
-      demand: false,
-      description: 'Output format to display your login sessions with ("json" or "table")',
-      type: "string",
-    });
-
-  addCommonConfiguration(yargs);
-}
-
-function sessionRemove(commandName: string, yargs: yargs.Argv): void {
-  isValidCommand = true;
-  yargs
-    .usage(USAGE_PREFIX + " session " + commandName + " <machineName>")
-    .demand(/*count*/ 1, /*max*/ 1) // Require exactly one non-option arguments
-    .example("session " + commandName + ' "John\'s PC"', 'Removes the existing login session from "John\'s PC"');
 
   addCommonConfiguration(yargs);
 }
@@ -279,21 +184,6 @@ function deploymentHistory(commandName: string, yargs: yargs.Argv): void {
 yargs
   .usage(USAGE_PREFIX + " <command>")
   .demand(/*count*/ 1, /*max*/ 1) // Require exactly one non-option argument.
-  .command("access-key", "View and manage the access keys associated with your account", (yargs: yargs.Argv) => {
-    isValidCommandCategory = true;
-    yargs
-      .usage(USAGE_PREFIX + " access-key <command>")
-      .demand(/*count*/ 2, /*max*/ 2) // Require exactly two non-option arguments.
-      .command("add", "Create a new access key associated with your account", (yargs: yargs.Argv) => accessKeyAdd("add", yargs))
-      .command("patch", "Update the name and/or TTL of an existing access key", (yargs: yargs.Argv) => accessKeyPatch("patch", yargs))
-      .command("remove", "Remove an existing access key", (yargs: yargs.Argv) => accessKeyRemove("remove", yargs))
-      .command("rm", "Remove an existing access key", (yargs: yargs.Argv) => accessKeyRemove("rm", yargs))
-      .command("list", "List the access keys associated with your account", (yargs: yargs.Argv) => accessKeyList("list", yargs))
-      .command("ls", "List the access keys associated with your account", (yargs: yargs.Argv) => accessKeyList("ls", yargs))
-      .check((argv: any, aliases: { [aliases: string]: string }): any => isValidCommand); // Report unrecognized, non-hyphenated command category.
-
-    addCommonConfiguration(yargs);
-  })
   .command("app", "View and manage your CodePush apps", (yargs: yargs.Argv) => {
     isValidCommandCategory = true;
     yargs
@@ -321,6 +211,7 @@ yargs
       })
       .command("list", "Lists the apps associated with your account", (yargs: yargs.Argv) => appList("list", yargs))
       .command("ls", "Lists the apps associated with your account", (yargs: yargs.Argv) => appList("ls", yargs))
+      .command("deployment-keys","Lists the deployment keys for app", (yargs:yargs.Argv) => appDeploymentKeyList("deployment-keys", yargs))
       .command("transfer", "Transfer the ownership of an app to another account", (yargs: yargs.Argv) => {
         isValidCommand = true;
         yargs
@@ -387,17 +278,6 @@ yargs
       .command("ls", "List the deployments associated with an app", (yargs: yargs.Argv) => deploymentList("ls", yargs))
       .command("history", "Display the release history for a deployment", (yargs: yargs.Argv) => deploymentHistory("history", yargs))
       .command("h", "Display the release history for a deployment", (yargs: yargs.Argv) => deploymentHistory("h", yargs))
-      .check((argv: any, aliases: { [aliases: string]: string }): any => isValidCommand); // Report unrecognized, non-hyphenated command category.
-
-    addCommonConfiguration(yargs);
-  })
-  .command("link", "Link an additional authentication provider (e.g. GitHub) to an existing CodePush account", (yargs: yargs.Argv) => {
-    isValidCommandCategory = true;
-    isValidCommand = true;
-    yargs
-      .usage(USAGE_PREFIX + " link")
-      .demand(/*count*/ 0, /*max*/ 1) //set 'max' to one to allow usage of serverUrl undocument parameter for testing
-      .example("link", "Links an account on the CodePush server")
       .check((argv: any, aliases: { [aliases: string]: string }): any => isValidCommand); // Report unrecognized, non-hyphenated command category.
 
     addCommonConfiguration(yargs);
@@ -576,17 +456,6 @@ yargs
       .check((argv: any, aliases: { [aliases: string]: string }): any => {
         return isValidRollout(argv);
       });
-
-    addCommonConfiguration(yargs);
-  })
-  .command("register", "Register a new CodePush account", (yargs: yargs.Argv) => {
-    isValidCommandCategory = true;
-    isValidCommand = true;
-    yargs
-      .usage(USAGE_PREFIX + " register")
-      .demand(/*count*/ 0, /*max*/ 1) //set 'max' to one to allow usage of serverUrl undocument parameter for testing
-      .example("register", "Registers a new CodePush account")
-      .check((argv: any, aliases: { [aliases: string]: string }): any => isValidCommand); // Report unrecognized, non-hyphenated command category.
 
     addCommonConfiguration(yargs);
   })
@@ -853,21 +722,6 @@ yargs
 
     addCommonConfiguration(yargs);
   })
-  .command("session", "View and manage the current login sessions associated with your account", (yargs: yargs.Argv) => {
-    isValidCommandCategory = true;
-    yargs
-      .usage(USAGE_PREFIX + " session <command>")
-      .demand(/*count*/ 2, /*max*/ 2) // Require exactly two non-option arguments.
-      .command("remove", "Remove an existing login session", (yargs: yargs.Argv) => sessionRemove("remove", yargs))
-      .command("rm", "Remove an existing login session", (yargs: yargs.Argv) => sessionRemove("rm", yargs))
-      .command("list", "List the current login sessions associated with your account", (yargs: yargs.Argv) =>
-        sessionList("list", yargs)
-      )
-      .command("ls", "List the current login sessions associated with your account", (yargs: yargs.Argv) => sessionList("ls", yargs))
-      .check((argv: any, aliases: { [aliases: string]: string }): any => isValidCommand); // Report unrecognized, non-hyphenated command category.
-
-    addCommonConfiguration(yargs);
-  })
   .alias("v", "version")
   .version(packageJson.version)
   .wrap(/*columnLimit*/ null)
@@ -887,56 +741,6 @@ export function createCommand(): cli.ICommand {
     const arg4: any = argv._[4];
 
     switch (arg0) {
-      case "access-key":
-        switch (arg1) {
-          case "add":
-            if (arg2) {
-              cmd = { type: cli.CommandType.accessKeyAdd };
-              const accessKeyAddCmd = <cli.IAccessKeyAddCommand>cmd;
-              accessKeyAddCmd.name = arg2;
-              const ttlOption: string = argv["ttl"] as any;
-              if (isDefined(ttlOption)) {
-                accessKeyAddCmd.ttl = parseDurationMilliseconds(ttlOption);
-              }
-            }
-            break;
-
-          case "patch":
-            if (arg2) {
-              cmd = { type: cli.CommandType.accessKeyPatch };
-              const accessKeyPatchCmd = <cli.IAccessKeyPatchCommand>cmd;
-              accessKeyPatchCmd.oldName = arg2;
-
-              const newNameOption: string = argv["name"] as any;
-              const ttlOption: string = argv["ttl"] as any;
-              if (isDefined(newNameOption)) {
-                accessKeyPatchCmd.newName = newNameOption;
-              }
-
-              if (isDefined(ttlOption)) {
-                accessKeyPatchCmd.ttl = parseDurationMilliseconds(ttlOption);
-              }
-            }
-            break;
-
-          case "list":
-          case "ls":
-            cmd = { type: cli.CommandType.accessKeyList };
-
-            (<cli.IAccessKeyListCommand>cmd).format = argv["format"] as any;
-            break;
-
-          case "remove":
-          case "rm":
-            if (arg2) {
-              cmd = { type: cli.CommandType.accessKeyRemove };
-
-              (<cli.IAccessKeyRemoveCommand>cmd).accessKey = arg2;
-            }
-            break;
-        }
-        break;
-
       case "app":
         switch (arg1) {
           case "add":
@@ -953,7 +757,10 @@ export function createCommand(): cli.ICommand {
 
             (<cli.IAppListCommand>cmd).format = argv["format"] as any;
             break;
-
+          case "deployment-keys":
+            cmd = {type : cli.CommandType.appDeploymentKeyList};
+            (<cli.IAppDeploymentKeysCommand>cmd).appName = arg2;
+            break;
           case "remove":
           case "rm":
             if (arg2) {
@@ -1065,13 +872,6 @@ export function createCommand(): cli.ICommand {
         }
         break;
 
-      case "link":
-        cmd = <cli.ILinkCommand>{
-          type: cli.CommandType.link,
-          serverUrl: getServerUrl(arg1),
-        };
-        break;
-
       case "login":
         cmd = { type: cli.CommandType.login };
 
@@ -1122,14 +922,6 @@ export function createCommand(): cli.ICommand {
           deploymentPromoteCommand.rollout = getRolloutValue(argv["rollout"] as any);
           deploymentPromoteCommand.appStoreVersion = argv["targetBinaryVersion"] as any;
         }
-        break;
-
-      case "register":
-        cmd = { type: cli.CommandType.register };
-
-        const registerCommand = <cli.IRegisterCommand>cmd;
-
-        registerCommand.serverUrl = getServerUrl(arg1);
         break;
 
       case "release":
@@ -1193,26 +985,6 @@ export function createCommand(): cli.ICommand {
           rollbackCommand.appName = arg1;
           rollbackCommand.deploymentName = arg2;
           rollbackCommand.targetRelease = argv["targetRelease"] as any;
-        }
-        break;
-
-      case "session":
-        switch (arg1) {
-          case "list":
-          case "ls":
-            cmd = { type: cli.CommandType.sessionList };
-
-            (<cli.ISessionListCommand>cmd).format = argv["format"] as any;
-            break;
-
-          case "remove":
-          case "rm":
-            if (arg2) {
-              cmd = { type: cli.CommandType.sessionRemove };
-
-              (<cli.ISessionRemoveCommand>cmd).machineName = arg2;
-            }
-            break;
         }
         break;
     }

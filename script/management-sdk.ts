@@ -28,6 +28,7 @@ import {
   ServerAccessKey,
   Session,
 } from "./types";
+import { DeploymentKey } from "./types/rest-definitions";
 
 const packageJson = require("../../package.json");
 
@@ -266,6 +267,10 @@ class AccountManager {
 
   public getApp(appName: string): Promise<App> {
     return this.get(urlEncode([`/apps/${appName}`])).then((res: JsonResponse) => res.body.app);
+  }
+
+  public getDeploymentKeys(appName: string): Promise<DeploymentKey[]> {
+    return this.get(urlEncode([`/apps/${appName}/deployment-keys`])).then((res: JsonResponse) => res.body);
   }
 
   public addApp(appName: string): Promise<App> {
