@@ -392,6 +392,7 @@ export function execute(command: cli.ICommand) {
     switch (command.type) {
       // Must not be logged in
       case cli.CommandType.login:
+           return login(<cli.ILoginCommand>command);
 
       // Must be logged in
       default:
@@ -443,9 +444,6 @@ export function execute(command: cli.ICommand) {
 
       case cli.CommandType.deploymentRename:
         return deploymentRename(<cli.IDeploymentRenameCommand>command);
-
-      case cli.CommandType.login:
-        return login(<cli.ILoginCommand>command);
 
       case cli.CommandType.logout:
         return logout(command);
