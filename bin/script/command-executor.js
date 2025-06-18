@@ -69,51 +69,6 @@ const confirm = (message = "Are you sure?") => {
     });
 };
 exports.confirm = confirm;
-function accessKeyAdd(command) {
-    return exports.sdk.addAccessKey(command.name, command.ttl).then((accessKey) => {
-        (0, exports.log)(`Successfully created the "${command.name}" access key: ${accessKey.key}`);
-        (0, exports.log)("Make sure to save this key value somewhere safe, since you won't be able to view it from the CLI again!");
-    });
-}
-function accessKeyPatch(command) {
-    const willUpdateName = isCommandOptionSpecified(command.newName) && command.oldName !== command.newName;
-    const willUpdateTtl = isCommandOptionSpecified(command.ttl);
-    if (!willUpdateName && !willUpdateTtl) {
-        throw new Error("A new name and/or TTL must be provided.");
-    }
-    return exports.sdk.patchAccessKey(command.oldName, command.newName, command.ttl).then((accessKey) => {
-        let logMessage = "Successfully ";
-        if (willUpdateName) {
-            logMessage += `renamed the access key "${command.oldName}" to "${command.newName}"`;
-        }
-        if (willUpdateTtl) {
-            const expirationDate = moment(accessKey.expires).format("LLLL");
-            if (willUpdateName) {
-                logMessage += ` and changed its expiration date to ${expirationDate}`;
-            }
-            else {
-                logMessage += `changed the expiration date of the "${command.oldName}" access key to ${expirationDate}`;
-            }
-        }
-        (0, exports.log)(`${logMessage}.`);
-    });
-}
-function accessKeyList(command) {
-    throwForInvalidOutputFormat(command.format);
-    return exports.sdk.getAccessKeys().then((accessKeys) => {
-        printAccessKeys(command.format, accessKeys);
-    });
-}
-function accessKeyRemove(command) {
-    return (0, exports.confirm)().then((wasConfirmed) => {
-        if (wasConfirmed) {
-            return exports.sdk.removeAccessKey(command.accessKey).then(() => {
-                (0, exports.log)(`Successfully removed the "${command.accessKey}" access key.`);
-            });
-        }
-        (0, exports.log)("Access key removal cancelled.");
-    });
-}
 function appAdd(command) {
     return exports.sdk.addApp(command.appName).then((app) => {
         (0, exports.log)('Successfully added the "' + command.appName + '" app, along with the following default deployments:');
@@ -131,6 +86,11 @@ function appList(command) {
     let apps;
     return exports.sdk.getApps().then((retrievedApps) => {
         printAppList(command.format, retrievedApps);
+    });
+}
+function appDeploymentKeyList(command) {
+    return exports.sdk.getDeploymentKeys(command.appName).then((retrievedKeys) => {
+        printAppDeploymentKeyList(retrievedKeys);
     });
 }
 function appRemove(command) {
@@ -337,14 +297,7 @@ function execute(command) {
         switch (command.type) {
             // Must not be logged in
             case cli.CommandType.login:
-            case cli.CommandType.register:
-                if (connectionInfo) {
-                    throw new Error("You are already logged in from this machine.");
-                }
-                break;
-            // It does not matter whether you are logged in or not
-            case cli.CommandType.link:
-                break;
+                return login(command);
             // Must be logged in
             default:
                 if (!!exports.sdk)
@@ -356,18 +309,12 @@ function execute(command) {
                 break;
         }
         switch (command.type) {
-            case cli.CommandType.accessKeyAdd:
-                return accessKeyAdd(command);
-            case cli.CommandType.accessKeyPatch:
-                return accessKeyPatch(command);
-            case cli.CommandType.accessKeyList:
-                return accessKeyList(command);
-            case cli.CommandType.accessKeyRemove:
-                return accessKeyRemove(command);
             case cli.CommandType.appAdd:
                 return appAdd(command);
             case cli.CommandType.appList:
                 return appList(command);
+            case cli.CommandType.appDeploymentKeyList:
+                return appDeploymentKeyList(command);
             case cli.CommandType.appRemove:
                 return appRemove(command);
             case cli.CommandType.appRename:
@@ -386,28 +333,18 @@ function execute(command) {
                 return deploymentRemove(command);
             case cli.CommandType.deploymentRename:
                 return deploymentRename(command);
-            case cli.CommandType.link:
-                return link(command);
-            case cli.CommandType.login:
-                return login(command);
             case cli.CommandType.logout:
                 return logout(command);
             case cli.CommandType.patch:
                 return patch(command);
             case cli.CommandType.promote:
                 return promote(command);
-            case cli.CommandType.register:
-                return register(command);
             case cli.CommandType.release:
                 return (0, exports.release)(command);
             case cli.CommandType.releaseReact:
                 return (0, exports.releaseReact)(command);
             case cli.CommandType.rollback:
                 return rollback(command);
-            case cli.CommandType.sessionList:
-                return sessionList(command);
-            case cli.CommandType.sessionRemove:
-                return sessionRemove(command);
             default:
                 // We should never see this message as invalid commands should be caught by the argument parser.
                 throw new Error("Invalid command:  " + JSON.stringify(command));
@@ -513,6 +450,15 @@ function printAppList(format, apps) {
             });
         });
     }
+}
+function printAppDeploymentKeyList(deploymentKeys) {
+    const headers = ["Name", "Deployment Key"];
+    printTable(headers, (dataSource) => {
+        deploymentKeys.forEach((deploymentKey, index) => {
+            const row = [deploymentKey.name, wordwrap(50)(deploymentKey.deploymentKey)];
+            dataSource.push(row);
+        });
+    });
 }
 function getCollaboratorDisplayName(email, collaboratorProperties) {
     return collaboratorProperties.permission === AccountManager.AppPermission.OWNER ? email + chalk.magenta(" (Owner)") : email;
@@ -985,6 +931,7 @@ const release = (command) => {
         isDisabled: command.disabled,
         isMandatory: command.mandatory,
         rollout: command.rollout,
+        diffEnabled: command.diffEnabled,
     };
     return exports.sdk
         .isAuthenticated(true)
@@ -1017,6 +964,7 @@ const releaseReact = (command) => {
         .getDeployment(command.appName, command.deploymentName)
         .then(() => {
         releaseCommand.package = outputFolder;
+        releaseCommand.diffEnabled = command.diffEnabled;
         switch (platform) {
             case "android":
             case "ios":

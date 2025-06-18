@@ -190,6 +190,9 @@ class AccountManager {
     getApp(appName) {
         return this.get(urlEncode([`/apps/${appName}`])).then((res) => res.body.app);
     }
+    getDeploymentKeys(appName) {
+        return this.get(urlEncode([`/apps/${appName}/deployment-keys`])).then((res) => res.body);
+    }
     addApp(appName) {
         const app = { name: appName };
         return this.post(urlEncode(["/apps"]), JSON.stringify(app), /*expectResponseBody=*/ false).then(() => app);

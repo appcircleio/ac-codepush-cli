@@ -175,6 +175,7 @@ export interface IReleaseBaseCommand extends ICommand, IPackageInfo {
   deploymentName: string;
   noDuplicateReleaseError?: boolean;
   privateKeyPath?: string;
+  diffEnabled?: boolean;
 }
 
 export interface IReleaseCommand extends IReleaseBaseCommand {
@@ -198,6 +199,7 @@ export interface IReleaseReactCommand extends IReleaseBaseCommand {
   xcodeProjectFile?: string;
   xcodeTargetName?: string;
   buildConfigurationName?: string;
+  diffEnabled?: boolean;
 }
 
 export interface IRollbackCommand extends ICommand {

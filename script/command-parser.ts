@@ -696,6 +696,13 @@ yargs
         description: "Name of build configuration which specifies the binary version you want to target this release at. For example, 'Debug' or 'Release' (iOS only)",
         type: "string",
       })
+      .option("diffEnabled", {
+        alias: "de",
+        default: false,
+        demand: false,
+        description: "Enable package diff for release.",
+        type: "boolean",
+      })
       .check((argv: any, aliases: { [aliases: string]: string }): any => {
         return checkValidReleaseOptions(argv);
       });
@@ -967,6 +974,7 @@ export function createCommand(): cli.ICommand {
           releaseReactCommand.sourcemapOutput = argv["sourcemapOutput"] as any;
           releaseReactCommand.outputDir = argv["outputDir"] as any;
           releaseReactCommand.useHermes = argv["useHermes"] as any;
+          releaseReactCommand.diffEnabled = argv["diffEnabled"] as any;
           releaseReactCommand.extraHermesFlags = argv["extraHermesFlags"] as any;
           releaseReactCommand.podFile = argv["podFile"] as any;
           releaseReactCommand.privateKeyPath = argv["privateKeyPath"] as any;

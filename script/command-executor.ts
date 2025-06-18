@@ -1155,6 +1155,7 @@ export const release = (command: cli.IReleaseCommand): Promise<void> => {
     isDisabled: command.disabled,
     isMandatory: command.mandatory,
     rollout: command.rollout,
+    diffEnabled: command.diffEnabled,
   };
 
   return sdk
@@ -1191,7 +1192,7 @@ export const releaseReact = (command: cli.IReleaseReactCommand): Promise<void> =
       .getDeployment(command.appName, command.deploymentName)
       .then((): any => {
         releaseCommand.package = outputFolder;
-
+        releaseCommand.diffEnabled = command.diffEnabled;
         switch (platform) {
           case "android":
           case "ios":
