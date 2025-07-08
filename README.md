@@ -3,9 +3,34 @@
 > The implementation has been modified and may differ from the original.  
 > Documentation is currently being updated to reflect these changes.
 
+
 # CodePush CLI
 
 The CodePush CLI is a Node.js application that allows users to interact with CodePush Server.
+
+## Table of Contents
+1. [Installation](#installation)
+2. [Getting started](#getting-started)
+3. [Usage](#usage)
+4. [Account Management](#account-management)
+    - [Authentication](#authentication) 
+    - [Access Keys](#access-keys) 
+5. [App Management](#app-management)
+    - [Deployment Management](#deployment-management)
+6. [Releasing Updates](#releasing-updates)
+    - [Releasing Updates (General)](#releasing-updates-general)
+    - [Releasing Updates (React Native)](#releasing-updates-react-native)
+7. [Debugging CodePush Integration](#debugging-codepush-integration)
+8. [Patching Update Metadata](#patching-update-metadata)
+9. [Promoting Updates](#promoting-updates)
+10. [Rolling Back Updates](#rolling-back-updates)
+11. [Viewing Release History](#viewing-release-history)
+12. [Clearing Release History](#clearing-release-history)
+13. [Code Signing for CodePush](#code-signing-for-codepush)
+
+
+
+
 
 ## Installation
 
@@ -731,57 +756,10 @@ After running this command, client devices configured to receive updates using i
 
 ## Code Signing for CodePush
 
-Code Signing ensures that updates deployed via CodePush are secure and verified. Follow these steps to set up Code Signing:
-
-### 1. Generate a Signing Key
-
-**Create private and public keys using OpenSSL:**
-
-```shell
-# generate private RSA key and write it to private.pem file
-openssl genrsa -out private.pem
-
-# export public key from private.pem into public.pem
-openssl rsa -pubout -in private.pem -out public.pem
-```
-
-### 2. Configure CodePush CLI
-
-**Specify the path to your private key when releasing updates:**
+Code signing ensures that updates deployed via CodePush are secure and verified. You can enable code signing when releasing updates by using the `--privateKeyPath` or `-k` option and specifying the path to your private key.
 
 ```shell
 appcircle-code-push release-react <appName> <platform> --privateKeyPath private.pem
 ```
 
-### 3. Configure Your App
-
-#### iOS
-
-**Add the public key to your `Info.plist`:**
-
-- Open your `Info.plist` file.
-- Add a new entry:
-
-    ```xml
-    <key>CodePushPublicKey</key>
-    <string>-----BEGIN PUBLIC KEY-----
-    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
-    -----END PUBLIC KEY-----</string>
-    ```
-
-Replace the placeholder with the actual contents of your `public.pem` file.
-
-#### Android
-
-**Add the public key to your `strings.xml`:**
-
-- Open `res/values/strings.xml`.
-- Add the following entry:
-
-    ```xml
-    <string name="CodePushPublicKey">-----BEGIN PUBLIC KEY-----
-    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
-    -----END PUBLIC KEY-----</string>
-    ```
-
-Replace the placeholder with the actual contents of your `public.pem` file.
+For more information on how to configure code signing for your releases, refer to the [Appcircle documentation.](https://docs.appcircle.io/code-push/code-push-code-signing)
