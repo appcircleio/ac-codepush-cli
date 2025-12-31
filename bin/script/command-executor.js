@@ -395,7 +395,7 @@ function loginWithExternalAuthentication(action, serverUrl, authUrl) {
             // The user has aborted the synchronous prompt (e.g.:  via [CTRL]+[C]).
             return;
         }
-        exports.sdk = getSdk(accessKey, null, CLI_HEADERS, serverUrl, authUrl);
+        exports.sdk = getSdk(null, accessKey, CLI_HEADERS, serverUrl, authUrl);
         return exports.sdk.isAuthenticated().then((isAuthenticated) => {
             if (isAuthenticated) {
                 serializeConnectionInfo(accessKey, /*preserveAccessKeyOnLogout*/ false, serverUrl, authUrl);

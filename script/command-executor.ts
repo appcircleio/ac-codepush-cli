@@ -520,7 +520,7 @@ function loginWithExternalAuthentication(action: string, serverUrl?: string, aut
       return;
     }
 
-    sdk = getSdk(accessKey, null, CLI_HEADERS, serverUrl, authUrl);
+    sdk = getSdk(null, accessKey, CLI_HEADERS, serverUrl, authUrl);
 
     return sdk.isAuthenticated().then((isAuthenticated: boolean): void => {
       if (isAuthenticated) {
