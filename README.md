@@ -646,6 +646,7 @@ appcircle-code-push promote <appName> <sourceDeploymentName> <destDeploymentName
 [--noDuplicateReleaseError]
 [--rollout <rolloutPercentage>]
 [--targetBinaryVersion <targetBinaryVersion]
+[--diffEnabled]
 ```
 
 The `promote` command will create a new release for the destination deployment, which includes the **exact code and metadata** (description, mandatory and target binary version) from the latest release of the source deployment. While you could use the `release` command to "manually" migrate an update from one environment to another, the `promote` command has the following benefits:
