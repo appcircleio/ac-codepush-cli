@@ -129,7 +129,7 @@ function appAdd(command: cli.IAppAddCommand): Promise<void> {
       type: cli.CommandType.deploymentList,
       appName: app.name,
       format: "table",
-      displayKeys: true,
+      displayKeys: false,
     };
     return deploymentList(deploymentListCommand, /*showPackage=*/ false);
   });
@@ -343,23 +343,10 @@ function deploymentHistory(command: cli.IDeploymentHistoryCommand): Promise<void
   throwForInvalidOutputFormat(command.format);
 
   return Q.all<any>([
-    sdk.getAccountInfo(),
     sdk.getDeploymentHistory(command.appName, command.deploymentName),
-    sdk.getDeploymentMetrics(command.appName, command.deploymentName),
-  ]).spread<void>((account: Account, deploymentHistory: Package[], metrics: DeploymentMetrics): void => {
-    const totalActive: number = getTotalActiveFromDeploymentMetrics(metrics);
-    deploymentHistory.forEach((packageObject: Package) => {
-      if (metrics[packageObject.label]) {
-        (<PackageWithMetrics>packageObject).metrics = {
-          active: metrics[packageObject.label].active,
-          downloaded: metrics[packageObject.label].downloaded,
-          failed: metrics[packageObject.label].failed,
-          installed: metrics[packageObject.label].installed,
-          totalActive: totalActive,
-        };
-      }
-    });
-    printDeploymentHistory(command, <Package[]>deploymentHistory, account.email);
+    sdk.getDeployment(command.appName, command.deploymentName),
+  ]).spread<void>((deploymentHistory: Package[], deployment: Deployment): void => {
+    printDeploymentHistory(command, <Package[]>deploymentHistory);
   });
 }
 
@@ -524,7 +511,7 @@ function loginWithExternalAuthentication(action: string, serverUrl?: string, aut
 
     return sdk.isAuthenticated().then((isAuthenticated: boolean): void => {
       if (isAuthenticated) {
-        serializeConnectionInfo(accessKey, /*preserveAccessKeyOnLogout*/ false, serverUrl, authUrl);
+        serializeConnectionInfo(sdk.accessKey, /*preserveAccessKeyOnLogout*/ false, serverUrl, authUrl);
       } else {
         throw new Error("Invalid access key.");
       }
@@ -607,6 +594,7 @@ function printCollaboratorsList(format: string, collaborators: CollaboratorMap):
 }
 
 function printDeploymentList(command: cli.IDeploymentListCommand, deployments: Deployment[], showPackage: boolean = true): void {
+  command.displayKeys = false;
   if (command.format === "json") {
     printJson(deployments);
   } else if (command.format === "table") {
@@ -638,15 +626,11 @@ function printDeploymentList(command: cli.IDeploymentListCommand, deployments: D
   }
 }
 
-function printDeploymentHistory(command: cli.IDeploymentHistoryCommand, deploymentHistory: Package[], currentUserEmail: string): void {
+function printDeploymentHistory(command: cli.IDeploymentHistoryCommand, deploymentHistory: Package[], currentUserEmail?: string): void {
   if (command.format === "json") {
     printJson(deploymentHistory);
   } else if (command.format === "table") {
     const headers = ["Label", "Release Time", "App Version", "Mandatory"];
-    if (command.displayAuthor) {
-      headers.push("Released By");
-    }
-
     headers.push("Description", "Install Metrics");
 
     printTable(headers, (dataSource: any[]) => {
@@ -666,14 +650,6 @@ function printDeploymentHistory(command: cli.IDeploymentHistoryCommand, deployme
         }
 
         let row: string[] = [packageObject.label, releaseTime, packageObject.appVersion, packageObject.isMandatory ? "Yes" : "No"];
-        if (command.displayAuthor) {
-          let releasedBy: string = packageObject.releasedBy ? packageObject.releasedBy : "";
-          if (currentUserEmail && releasedBy === currentUserEmail) {
-            releasedBy = "You";
-          }
-
-          row.push(releasedBy);
-        }
 
         row.push(packageObject.description ? wordwrap(30)(packageObject.description) : "");
         row.push(getPackageMetricsString(packageObject) + (packageObject.isDisabled ? `\n${chalk.green("Disabled:")} Yes` : ""));
@@ -1078,6 +1054,7 @@ function promote(command: cli.IPromoteCommand): Promise<void> {
     isDisabled: command.disabled,
     isMandatory: command.mandatory,
     rollout: command.rollout,
+    diffEnabled: command.diffEnabled
   };
 
   return sdk
@@ -1100,13 +1077,13 @@ function promote(command: cli.IPromoteCommand): Promise<void> {
 
 function patch(command: cli.IPatchCommand): Promise<void> {
   const packageInfo: PackageInfo = {
-    appVersion: command.appStoreVersion,
+    appVersion: undefined,
     description: command.description,
     isMandatory: command.mandatory,
     isDisabled: command.disabled,
     rollout: command.rollout,
+    diffEnabled: command.diffEnabled
   };
-
   for (const updateProperty in packageInfo) {
     if ((<any>packageInfo)[updateProperty] !== null) {
       return sdk.patchRelease(command.appName, command.deploymentName, command.label, packageInfo).then((): void => {

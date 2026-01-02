@@ -45,6 +45,7 @@ class SdkStub {
             size: 10,
             blobUrl: "http://mno.pqr",
             uploadTime: 1000,
+            id: "test"
         },
     };
     getAccountInfo() {
@@ -506,6 +507,7 @@ describe("CLI", () => {
                     uploadTime: 1447113596270,
                     size: 1,
                     label: "v1",
+                    id: "testv1"
                 },
                 {
                     description: "New update - this update does a whole bunch of things, including testing linewrapping",
@@ -516,6 +518,7 @@ describe("CLI", () => {
                     uploadTime: 1447118476669,
                     size: 2,
                     label: "v2",
+                    id: "testv2"
                 },
             ];
             assertJsonDescribesObject(actual, expected);
@@ -531,8 +534,7 @@ describe("CLI", () => {
             disabled: false,
             description: "Patched",
             mandatory: true,
-            rollout: 25,
-            appStoreVersion: "1.0.1",
+            rollout: 25
         };
         var patch = sandbox.spy(cmdexec.sdk, "patchRelease");
         cmdexec.execute(command).done(() => {
@@ -551,8 +553,7 @@ describe("CLI", () => {
             disabled: false,
             description: "Patched",
             mandatory: true,
-            rollout: 25,
-            appStoreVersion: "1.0.1",
+            rollout: 25
         };
         var patch = sandbox.spy(cmdexec.sdk, "patchRelease");
         cmdexec.execute(command).done(() => {
@@ -571,8 +572,7 @@ describe("CLI", () => {
             disabled: false,
             description: "Patched",
             mandatory: true,
-            rollout: 25,
-            appStoreVersion: null,
+            rollout: 25
         };
         var patch = sandbox.spy(cmdexec.sdk, "patchRelease");
         cmdexec.execute(command).done(() => {
@@ -591,8 +591,7 @@ describe("CLI", () => {
             disabled: null,
             description: null,
             mandatory: null,
-            rollout: null,
-            appStoreVersion: null,
+            rollout: null
         };
         var patch = sandbox.spy(cmdexec.sdk, "patchRelease");
         cmdexec

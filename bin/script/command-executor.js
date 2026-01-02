@@ -76,7 +76,7 @@ function appAdd(command) {
             type: cli.CommandType.deploymentList,
             appName: app.name,
             format: "table",
-            displayKeys: true,
+            displayKeys: false,
         };
         return (0, exports.deploymentList)(deploymentListCommand, /*showPackage=*/ false);
     });
@@ -253,23 +253,10 @@ function deploymentRename(command) {
 function deploymentHistory(command) {
     throwForInvalidOutputFormat(command.format);
     return Q.all([
-        exports.sdk.getAccountInfo(),
         exports.sdk.getDeploymentHistory(command.appName, command.deploymentName),
-        exports.sdk.getDeploymentMetrics(command.appName, command.deploymentName),
-    ]).spread((account, deploymentHistory, metrics) => {
-        const totalActive = getTotalActiveFromDeploymentMetrics(metrics);
-        deploymentHistory.forEach((packageObject) => {
-            if (metrics[packageObject.label]) {
-                packageObject.metrics = {
-                    active: metrics[packageObject.label].active,
-                    downloaded: metrics[packageObject.label].downloaded,
-                    failed: metrics[packageObject.label].failed,
-                    installed: metrics[packageObject.label].installed,
-                    totalActive: totalActive,
-                };
-            }
-        });
-        printDeploymentHistory(command, deploymentHistory, account.email);
+        exports.sdk.getDeployment(command.appName, command.deploymentName),
+    ]).spread((deploymentHistory, deployment) => {
+        printDeploymentHistory(command, deploymentHistory);
     });
 }
 function deserializeConnectionInfo() {
@@ -398,7 +385,7 @@ function loginWithExternalAuthentication(action, serverUrl, authUrl) {
         exports.sdk = getSdk(null, accessKey, CLI_HEADERS, serverUrl, authUrl);
         return exports.sdk.isAuthenticated().then((isAuthenticated) => {
             if (isAuthenticated) {
-                serializeConnectionInfo(accessKey, /*preserveAccessKeyOnLogout*/ false, serverUrl, authUrl);
+                serializeConnectionInfo(exports.sdk.accessKey, /*preserveAccessKeyOnLogout*/ false, serverUrl, authUrl);
             }
             else {
                 throw new Error("Invalid access key.");
@@ -479,6 +466,7 @@ function printCollaboratorsList(format, collaborators) {
     }
 }
 function printDeploymentList(command, deployments, showPackage = true) {
+    command.displayKeys = false;
     if (command.format === "json") {
         printJson(deployments);
     }
@@ -512,9 +500,6 @@ function printDeploymentHistory(command, deploymentHistory, currentUserEmail) {
     }
     else if (command.format === "table") {
         const headers = ["Label", "Release Time", "App Version", "Mandatory"];
-        if (command.displayAuthor) {
-            headers.push("Released By");
-        }
         headers.push("Description", "Install Metrics");
         printTable(headers, (dataSource) => {
             deploymentHistory.forEach((packageObject) => {
@@ -532,13 +517,6 @@ function printDeploymentHistory(command, deploymentHistory, currentUserEmail) {
                     releaseTime += "\n" + chalk.magenta(`(${releaseSource})`).toString();
                 }
                 let row = [packageObject.label, releaseTime, packageObject.appVersion, packageObject.isMandatory ? "Yes" : "No"];
-                if (command.displayAuthor) {
-                    let releasedBy = packageObject.releasedBy ? packageObject.releasedBy : "";
-                    if (currentUserEmail && releasedBy === currentUserEmail) {
-                        releasedBy = "You";
-                    }
-                    row.push(releasedBy);
-                }
                 row.push(packageObject.description ? wordwrap(30)(packageObject.description) : "");
                 row.push(getPackageMetricsString(packageObject) + (packageObject.isDisabled ? `\n${chalk.green("Disabled:")} Yes` : ""));
                 if (packageObject.isDisabled) {
@@ -872,6 +850,7 @@ function promote(command) {
         isDisabled: command.disabled,
         isMandatory: command.mandatory,
         rollout: command.rollout,
+        diffEnabled: command.diffEnabled
     };
     return exports.sdk
         .promote(command.appName, command.sourceDeploymentName, command.destDeploymentName, packageInfo)
@@ -890,11 +869,12 @@ function promote(command) {
 }
 function patch(command) {
     const packageInfo = {
-        appVersion: command.appStoreVersion,
+        appVersion: undefined,
         description: command.description,
         isMandatory: command.mandatory,
         isDisabled: command.disabled,
         rollout: command.rollout,
+        diffEnabled: command.diffEnabled
     };
     for (const updateProperty in packageInfo) {
         if (packageInfo[updateProperty] !== null) {

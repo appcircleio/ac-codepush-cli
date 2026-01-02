@@ -306,12 +306,12 @@ yargs
         description: "Percentage of users this release should be immediately available to. This attribute can only be increased from the current value.",
         type: "string",
     })
-        .option("targetBinaryVersion", {
-        alias: "t",
+        .option("diffEnabled", {
+        alias: "de",
         default: null,
         demand: false,
-        description: "Semver expression that specifies the binary app version(s) this release is targeting (e.g. 1.1.0, ~1.2.3).",
-        type: "string",
+        description: "Enable package diff for release.",
+        type: "boolean",
     })
         .check((argv, aliases) => {
         return isValidRollout(argv);
@@ -371,6 +371,13 @@ yargs
         demand: false,
         description: "Semver expression that specifies the binary app version(s) this release is targeting (e.g. 1.1.0, ~1.2.3). If omitted, the target binary version property from the release being promoted will be used.",
         type: "string",
+    })
+        .option("diffEnabled", {
+        alias: "de",
+        default: false,
+        demand: false,
+        description: "Enable package diff for release.",
+        type: "boolean",
     })
         .check((argv, aliases) => {
         return isValidRollout(argv);
@@ -753,7 +760,7 @@ function createCommand() {
                     patchCommand.disabled = argv["disabled"];
                     patchCommand.mandatory = argv["mandatory"];
                     patchCommand.rollout = getRolloutValue(argv["rollout"]);
-                    patchCommand.appStoreVersion = argv["targetBinaryVersion"];
+                    patchCommand.diffEnabled = argv["diffEnabled"];
                 }
                 break;
             case "promote":
@@ -766,6 +773,7 @@ function createCommand() {
                     deploymentPromoteCommand.description = argv["description"] ? backslash(argv["description"]) : "";
                     deploymentPromoteCommand.label = argv["label"];
                     deploymentPromoteCommand.disabled = argv["disabled"];
+                    deploymentPromoteCommand.diffEnabled = argv["diffEnabled"];
                     deploymentPromoteCommand.mandatory = argv["mandatory"];
                     deploymentPromoteCommand.noDuplicateReleaseError = argv["noDuplicateReleaseError"];
                     deploymentPromoteCommand.rollout = getRolloutValue(argv["rollout"]);
