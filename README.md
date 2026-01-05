@@ -24,8 +24,7 @@ The CodePush CLI is a Node.js application that allows users to interact with Cod
 9. [Promoting Updates](#promoting-updates)
 10. [Rolling Back Updates](#rolling-back-updates)
 11. [Viewing Release History](#viewing-release-history)
-12. [Clearing Release History](#clearing-release-history)
-13. [Code Signing for CodePush](#code-signing-for-codepush)
+12. [Code Signing for CodePush](#code-signing-for-codepush)
 
 
 
@@ -718,15 +717,6 @@ By default, the history doesn't display the author of each release, but if you a
 
 _NOTE: The history command can also be run using the "h" alias_
 
-## Clearing Release History
-
-You can clear the release history associated with a deployment using the following command:
-
-```
-appcircle-code-push deployment clear <appName> <deploymentName>
-```
-
-After running this command, client devices configured to receive updates using its associated deployment key will no longer receive the updates that have been cleared. This command is irreversible, and therefore should not be used in a production deployment.
 
 ## Code Signing for CodePush
 
