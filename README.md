@@ -1,7 +1,6 @@
 > ⚠️ **Notice**  
 > This NPM package is a fork of the original GitHub repository.  
-> The implementation has been modified and may differ from the original.  
-> Documentation is currently being updated to reflect these changes.
+> The implementation has been modified and may differ from the original.
 
 
 # CodePush CLI
@@ -14,7 +13,7 @@ The CodePush CLI is a Node.js application that allows users to interact with Cod
 3. [Usage](#usage)
 4. [Account Management](#account-management)
     - [Authentication](#authentication) 
-    - [Access Keys](#access-keys) 
+    - [Self-hosted Login](#self-hosted-login) 
 5. [App Management](#app-management)
     - [Deployment Management](#deployment-management)
 6. [Releasing Updates](#releasing-updates)
@@ -25,8 +24,7 @@ The CodePush CLI is a Node.js application that allows users to interact with Cod
 9. [Promoting Updates](#promoting-updates)
 10. [Rolling Back Updates](#rolling-back-updates)
 11. [Viewing Release History](#viewing-release-history)
-12. [Clearing Release History](#clearing-release-history)
-13. [Code Signing for CodePush](#code-signing-for-codepush)
+12. [Code Signing for CodePush](#code-signing-for-codepush)
 
 
 
@@ -43,8 +41,7 @@ To run the CodePush CLI, follow these steps:
 
 ## Getting started
 
-1. Create a [CodePush account](#account-creation) push using the CodePush CLI.
-1. Register your app with CodePush, and optionally share it with other developers on your team.
+1. Create an [Appcircle account](https://my.appcircle.io/registration).
 1. CodePush-ify your app and point it at the deployment you wish to use.
 1. Release an update for your app.
 1. Check out the debug logs to ensure everything is working as expected.
@@ -55,73 +52,42 @@ After installing CodePush CLI globally, it will be available under `appcircle-co
 
 ## Account Management
 
-Before you can begin releasing app updates, you need to create a CodePush account. You can do this by simply running the following command once you've installed the CLI:
-
-```
-appcircle-code-push register <optional: server-url>
-```
-
-This will launch a browser, asking you to authenticate with either your GitHub or Microsoft account. Once authenticated, it will create a CodePush account "linked" to your GitHub/MSA identity, and generate an access key you can copy/paste into the CLI in order to login.
-
-_Note: After registering, you are automatically logged-in with the CLI, so until you explicitly log out, you don't need to login again from the same machine._
-
-If you have an existing account, you may also link your account to another identity provider (e.g. Microsoft, GitHub) by running:
-
-```
-appcircle-code-push link
-```
-
-_Note: In order to link multiple accounts, the email address associated with each provider must match._
+To begin releasing CodePush updates, simply [sign up for an Appcircle account](https://my.appcircle.io/registration). Your Appcircle account provides all the access you need to manage applications, deployments, and updates, and no additional registration or configuration is required.
 
 ### Authentication
 
-Most commands within the CodePush CLI require authentication, and therefore, before you can begin managing your account, you need to login using the GitHub or Microsoft account you used when registering. You can do this by running the following command:
+Most commands in the CodePush CLI require authentication. Before you can begin managing your account, you need to log in using a Personal Access Key obtained from the Appcircle dashboard. See how to [create a Personal Access Key](https://docs.appcircle.io/account/my-organization/security/personal-access-key).
 
-```shell
-appcircle-code-push login <optional: server-url> <optional: auth-url>
-```
-
-This will launch a browser, asking you to authenticate with either your GitHub or Microsoft account. This will generate an access key that you need to copy/paste into the CLI (it will prompt you for it). You are now successfully authenticated and can safely close your browser window.
-
-
-When you login from the CLI, your access key is persisted to disk for the duration of your session so that you don't have to login every time you attempt to access your account. In order to end your session and delete this access key, simply run the following command:
-
-```shell
-appcircle-code-push logout
-```
-
-If you forget to logout from a machine you'd prefer not to leave a running session on (e.g. your friend's laptop), you can use the following commands to list and remove any current login sessions.
-
-```shell
-appcircle-code-push session ls
-appcircle-code-push session rm <machineName>
-```
-
-### Access Keys
-
-If you need to be able to authenticate against the CodePush service without launching a browser and/or without needing to use your GitHub and/or Microsoft credentials (e.g. in a CI environment), you can run the following command to create an "access key" (along with a name describing what it is for):
-
-```shell
-appcircle-code-push access-key add "VSTS Integration"
-```
-
-By default, access keys expire in 60 days. You can specify a different expiry duration by using the `--ttl` option and passing in a [human readable duration string](https://github.com/jkroso/parse-duration#parsestr) (e.g. "2d" => 2 days, "1h 15 min" => 1 hour and 15 minutes). For security, the key will only be shown once on creation, so remember to save it somewhere if needed!
-
-After creating the new key, you can specify its value using the `--accessKey` flag of the `login` command, which allows you to perform "headless" authentication, as opposed to launching a browser.
+Once the Personal Access Key is obtained, you can specify its value using the `--accessKey` flag of the `login` command.
 
 ```shell
 appcircle-code-push login --accessKey <accessKey>
 ```
 
-When logging in via this method, the access key will not be automatically invalidated on logout, and can be used in future sessions until it is explicitly removed from the CodePush server or expires. However, it is still recommended that you log out once your session is complete, in order to remove your credentials from disk.
-
-Finally, if at any point you need to change a key's name and/or expiration date, you can use the following command:
+When you log in from the CLI, your access key is persisted to disk for the duration of your session so that you don't have to login every time you attempt to access your account. In order to end your session, and delete this access key, simply run the following command:
 
 ```shell
-appcircle-code-push access-key patch <accessKeyName> --name "new name" --ttl 10d
+appcircle-code-push logout
 ```
 
-_NOTE: When patching the TTL of an existing access key, its expiration date will be set relative to the current time, with no regard for its previous value._
+### Self-hosted Login
+
+> ⚠️ **Notice**  
+> Appcircle CodePush is available for self-hosted environments starting from Appcircle version **3.28.2**. 
+> If you are running a self-hosted version earlier than **3.28.2**, you must update to use CodePush.
+
+Appcircle CodePush supports self-hosted environments. Before you begin managing your account, you need to log in using a Personal Access Key obtained from the Appcircle dashboard. See how to [create a Personal Access Key](https://docs.appcircle.io/account/my-organization/security/personal-access-key).
+
+Once the Personal Access Key is obtained, you can specify its value using the `--accessKey`, `--serverUrl`, and `--authUrl` flags of the `login` command.
+
+```shell
+appcircle-code-push login --accessKey <accessKey> --serverUrl <serverUrl> --authUrl <authUrl>
+```
+- **`--serverUrl`** specifies the CodePush API server URL used by self-hosted Appcircle instances (e.g. `https://api-appcircle.spacetech.com/codepush`).
+- **`--authUrl`** specifies the authentication endpoint used by self-hosted Appcircle instances (e.g. `https://auth-appcircle.spacetech.com`).
+
+Once you log in to the CLI, you can use it as usual for your self-hosted CodePush environment.
+
 
 ## App Management
 
@@ -169,7 +135,7 @@ appcircle-code-push app ls
 
 From the CodePush perspective, an app is simply a named grouping for one or more things called "deployments". While the app represents a conceptual "namespace" or "scope" for a platform-specific version of an app (e.g. the iOS port of Foo app), its deployments represent the actual target for releasing updates (for developers) and synchronizing updates (for end-users). Deployments allow you to have multiple "environments" for each app in-flight at any given time, and help model the reality that apps typically move from a dev's personal environment to a testing/QA/staging environment, before finally making their way into production.
 
-_NOTE: As you'll see below, the `release`, `promote` and `rollback` commands require both an app name and a deployment name is order to work, because it is the combination of the two that uniquely identifies a point of distribution (e.g. I want to release an update of my iOS app to my beta testers)._
+_NOTE: As you'll see below, the `release`, `promote` and `rollback` commands require both an app name and a deployment name in order to work, because it is the combination of the two that uniquely identifies a point of distribution (e.g. I want to release an update of my iOS app to my beta testers)._
 
 Whenever an app is registered with the CodePush service, it includes two deployments by default: `Staging` and `Production`. This allows you to immediately begin releasing updates to an internal environment, where you can thoroughly test each update before pushing them out to your end-users. This workflow is critical for ensuring your releases are ready for mass-consumption, and is a practice that has been established in the web for a long time.
 
@@ -195,14 +161,12 @@ appcircle-code-push deployment rename <appName> <deploymentName> <newDeploymentN
 If at any time you'd like to view the list of deployments that a specific app includes, you can simply run the following command:
 
 ```
-appcircle-code-push deployment ls <appName> [--displayKeys|-k]
+appcircle-code-push deployment ls <appName> 
 ```
 
 This will display not only the list of deployments, but also the update metadata (e.g. mandatory, description) and installation metrics for their latest release:
 
 ![Deployment list](https://cloud.githubusercontent.com/assets/116461/12526883/7730991c-c127-11e5-9196-98e9ceec758f.png)
-
-_NOTE: Due to their infrequent use and needed screen real estate, deployment keys aren't displayed by default. If you need to view them, simply make sure to pass the `-k` flag to the `deployment ls` command._
 
 The install metrics have the following meaning:
 
@@ -366,6 +330,7 @@ appcircle-code-push release-react <appName> <platform>
 [--entryFile <entryFile>]
 [--gradleFile <gradleFile>]
 [--mandatory]
+[--diffEnabled]
 [--noDuplicateReleaseError]
 [--outputDir <outputDir>]
 [--plistFile <plistFile>]
@@ -427,6 +392,14 @@ This is the same parameter as the one described in the [above section](#descript
 #### Mandatory parameter
 
 This is the same parameter as the one described in the [above section](#mandatory-parameter).
+
+#### Diff enabled parameter
+
+The **diff enabled** parameter determines whether package diffing is applied during an update. When enabled, end users download only the changed files instead of the entire update package, reducing download size and improving update efficiency.
+
+If not specified, diffing is disabled by default and clients will download the full package. This parameter is especially useful for frequent release cycles, large bundles, or performance-sensitive applications where minimizing update size is important.
+
+_NOTE: This parameter can be set using --diffEnabled or --de._
 
 #### No duplicate release error parameter
 
@@ -745,15 +718,6 @@ By default, the history doesn't display the author of each release, but if you a
 
 _NOTE: The history command can also be run using the "h" alias_
 
-## Clearing Release History
-
-You can clear the release history associated with a deployment using the following command:
-
-```
-appcircle-code-push deployment clear <appName> <deploymentName>
-```
-
-After running this command, client devices configured to receive updates using its associated deployment key will no longer receive the updates that have been cleared. This command is irreversible, and therefore should not be used in a production deployment.
 
 ## Code Signing for CodePush
 
