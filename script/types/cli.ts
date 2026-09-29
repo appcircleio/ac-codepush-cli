@@ -193,7 +193,7 @@ export interface IReleaseReactCommand extends IReleaseBaseCommand {
   sourcemapOutput?: string;
   outputDir?: string;
   config?: string;
-  useHermes?: boolean;
+  useHermes?: boolean | undefined; // undefined = detect from the project, true = force on, false = force off
   extraHermesFlags?: string[];
   podFile?: string;
   xcodeProjectFile?: string;

@@ -388,6 +388,8 @@ The `release-react` command is a React Native-specific version of the "vanilla" 
 
 2. Inferring the [`targetBinaryVersion`](#target-binary-version-parameter) of this release by using the version name that is specified in your project's `Info.plist` (for iOS) and `build.gradle` (for Android) files.
 
+3. Compiling the JS bundle to Hermes bytecode when the project uses Hermes. This is detected from the project (see the [`--useHermes`](#use-hermes-parameter) parameter), so an app that ships with Hermes receives bytecode instead of plain JavaScript and does not have to compile the bundle on every cold start.
+
 To illustrate the difference that the `release-react` command can make, the following is an example of how you might generate and release an update for a React Native app using the "vanilla" `release` command:
 
 ```shell
@@ -464,7 +466,7 @@ _NOTE: This parameter can be set using either --entryFile or -e_
 
 #### Gradle file parameter (Android only)
 
-This specifies the relative path to the `build.gradle` file that the CLI should use when attempting to auto-detect the target binary version for the release. This parameter is only meant for advanced scenarios, since the CLI will automatically be able to find your `build.grade` file in "standard" React Native projects. However, if your gradle file is located in an arbitrary location, that the CLI can't discover, then using this parameter allows you to continue releasing CodePush updates, without needing to explicitly set the `--targetBinaryVersion` parameter. Since `build.gradle` is a required file name, specifying the path to the containing folder or the full path to the file itself will both achieve the same effect.
+This specifies the relative path to the `build.gradle` file that the CLI should use when attempting to auto-detect the target binary version for the release. This parameter is only meant for advanced scenarios, since the CLI will automatically be able to find your `build.grade` file in "standard" React Native projects. However, if your gradle file is located in an arbitrary location, that the CLI can't discover, then using this parameter allows you to continue releasing CodePush updates, without needing to explicitly set the `--targetBinaryVersion` parameter. Since `build.gradle` is a required file name, specifying the path to the containing folder or the full path to the file itself will both achieve the same effect. The same location is used for the Hermes check: `gradle.properties` is read from the nearest parent folder of the `build.gradle` file that contains `settings.gradle` or `settings.gradle.kts` (e.g. `android/gradle.properties` for `android/app/build.gradle`).
 
 ```shell
 appcircle-code-push release-react MyApp-Android android -p "./foo/bar/"
@@ -511,13 +513,15 @@ _NOTE: This parameter can be set using either --outputDir or -o_
 
 #### Use Hermes parameter
 
-This parameter enforces the use of the Hermes compiler. If not specified, the automatic checks will be performed, inspecting the `build.gradle` and `Podfile` for the Hermes flag.
+This specifies whether the generated JS bundle should be compiled to Hermes bytecode before it is released. If left unspecified, the CLI detects Hermes from the project: on Android it reads `enableHermes` in `project.ext.react` of the `build.gradle` file (React Native 0.70 and older) or `hermesEnabled` in `android/gradle.properties` (React Native 0.71 and newer, where Hermes is the default); on iOS it reads `:hermes_enabled` in the `Podfile` (Hermes is the default from React Native 0.71). Set `--useHermes` to force Hermes on, which fails if no Hermes compiler can be found, or `--useHermes false` to force it off and release a plain JavaScript bundle.
 
-_NOTE: This parameter can be set using either --hermesEnabled or -h_
+The Hermes compiler (`hermesc`) is looked up in `node_modules/react-native/sdks/hermesc`, then in the `hermesCommand` of `project.ext.react` (Android only), then in the `hermes-compiler` package (React Native 0.83 and newer), `hermes-engine` and `hermesvm`. The release output prints which rule enabled or disabled Hermes and which compiler was used. When Hermes was detected automatically but no compiler is found, the CLI prints a warning with the searched paths and releases the plain JavaScript bundle; with `--useHermes` it fails instead. On iOS, when the `Podfile` has no explicit `:hermes_enabled` value (React Native 0.71 and newer), a `Podfile.lock` without the `hermes-engine` pod or a `Podfile.properties.json` with `"expo.jsEngine": "jsc"`, both read next to the `Podfile`, counts as Hermes off.
+
+_NOTE: This parameter can be set using either --useHermes or -h_
 
 #### Podfile parameter (iOS only)
 
-The Podfile path will be used for Hermes automatic check. Not used if `--useHermes` is specified.
+The Podfile path will be used for the Hermes automatic check. Not used if `--useHermes` or `--useHermes false` is specified.
 
 _NOTE: This parameter can be set using either --podfile or -pod_
 
