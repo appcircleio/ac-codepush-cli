@@ -112,13 +112,6 @@ function deploymentList(commandName, yargs) {
         demand: false,
         description: 'Output format to display your deployments with ("json" or "table")',
         type: "string",
-    })
-        .option("displayKeys", {
-        alias: "k",
-        default: false,
-        demand: false,
-        description: "Specifies whether to display the deployment keys",
-        type: "boolean",
     });
     addCommonConfiguration(yargs);
 }
@@ -181,14 +174,6 @@ yargs
         .command("list", "Lists the apps associated with your account", (yargs) => appList("list", yargs))
         .command("ls", "Lists the apps associated with your account", (yargs) => appList("ls", yargs))
         .command("deployment-keys", "Lists the deployment keys for app", (yargs) => appDeploymentKeyList("deployment-keys", yargs))
-        .command("transfer", "Transfer the ownership of an app to another account", (yargs) => {
-        isValidCommand = true;
-        yargs
-            .usage(USAGE_PREFIX + " app transfer <appName> <email>")
-            .demand(/*count*/ 2, /*max*/ 2) // Require exactly two non-option arguments
-            .example("app transfer MyApp foo@bar.com", 'Transfers the ownership of app "MyApp" to an account with email "foo@bar.com"');
-        addCommonConfiguration(yargs);
-    })
         .check((argv, aliases) => isValidCommand); // Report unrecognized, non-hyphenated command category.
     addCommonConfiguration(yargs);
 })
@@ -222,7 +207,6 @@ yargs
         });
         addCommonConfiguration(yargs);
     })
-        .command("clear", "Clear the release history associated with a deployment", (yargs) => deploymentHistoryClear("clear", yargs))
         .command("remove", "Remove a deployment from an app", (yargs) => deploymentRemove("remove", yargs))
         .command("rm", "Remove a deployment from an app", (yargs) => deploymentRemove("rm", yargs))
         .command("rename", "Rename an existing deployment", (yargs) => {
@@ -322,12 +306,12 @@ yargs
         description: "Percentage of users this release should be immediately available to. This attribute can only be increased from the current value.",
         type: "string",
     })
-        .option("targetBinaryVersion", {
-        alias: "t",
+        .option("diffEnabled", {
+        alias: "de",
         default: null,
         demand: false,
-        description: "Semver expression that specifies the binary app version(s) this release is targeting (e.g. 1.1.0, ~1.2.3).",
-        type: "string",
+        description: "Enable package diff for release.",
+        type: "boolean",
     })
         .check((argv, aliases) => {
         return isValidRollout(argv);
@@ -387,6 +371,13 @@ yargs
         demand: false,
         description: "Semver expression that specifies the binary app version(s) this release is targeting (e.g. 1.1.0, ~1.2.3). If omitted, the target binary version property from the release being promoted will be used.",
         type: "string",
+    })
+        .option("diffEnabled", {
+        alias: "de",
+        default: false,
+        demand: false,
+        description: "Enable package diff for release.",
+        type: "boolean",
     })
         .check((argv, aliases) => {
         return isValidRollout(argv);
@@ -769,7 +760,7 @@ function createCommand() {
                     patchCommand.disabled = argv["disabled"];
                     patchCommand.mandatory = argv["mandatory"];
                     patchCommand.rollout = getRolloutValue(argv["rollout"]);
-                    patchCommand.appStoreVersion = argv["targetBinaryVersion"];
+                    patchCommand.diffEnabled = argv["diffEnabled"];
                 }
                 break;
             case "promote":
@@ -782,6 +773,7 @@ function createCommand() {
                     deploymentPromoteCommand.description = argv["description"] ? backslash(argv["description"]) : "";
                     deploymentPromoteCommand.label = argv["label"];
                     deploymentPromoteCommand.disabled = argv["disabled"];
+                    deploymentPromoteCommand.diffEnabled = argv["diffEnabled"];
                     deploymentPromoteCommand.mandatory = argv["mandatory"];
                     deploymentPromoteCommand.noDuplicateReleaseError = argv["noDuplicateReleaseError"];
                     deploymentPromoteCommand.rollout = getRolloutValue(argv["rollout"]);

@@ -242,7 +242,7 @@ class AccountManager {
         return this.get(urlEncode([`/apps/${appName}/deployments/${deploymentName}/metrics`])).then((res) => res.body.metrics);
     }
     getDeploymentHistory(appName, deploymentName) {
-        return this.get(urlEncode([`/apps/${appName}/deployments/${deploymentName}/history`])).then((res) => res.body.history);
+        return this.get(urlEncode([`/apps/${appName}/deployments/${deploymentName}`])).then((res) => res.body.history);
     }
     release(appName, deploymentName, filePath, targetBinaryVersion, updateMetadata, uploadProgressCallback) {
         return Promise((resolve, reject, notify) => {
@@ -304,10 +304,32 @@ class AccountManager {
         });
     }
     patchRelease(appName, deploymentName, label, updateMetadata) {
-        updateMetadata.label = label;
-        const requestBody = JSON.stringify({ packageInfo: updateMetadata });
-        return this.patch(urlEncode([`/apps/${appName}/deployments/${deploymentName}/release`]), requestBody, 
-        /*expectResponseBody=*/ false).then(() => null);
+        return this.getDeploymentHistory(appName, deploymentName).then((history) => {
+            var currentPackage = history?.[0];
+            if (label) {
+                currentPackage = history?.find(item => item.label === label);
+            }
+            updateMetadata.appVersion = updateMetadata?.appVersion || currentPackage?.appVersion;
+            updateMetadata.description = updateMetadata?.description || currentPackage?.description;
+            updateMetadata.diffEnabled =
+                typeof updateMetadata?.diffEnabled === 'boolean'
+                    ? updateMetadata.diffEnabled
+                    : currentPackage?.diffEnabled;
+            updateMetadata.isDisabled =
+                typeof updateMetadata?.isDisabled === 'boolean'
+                    ? updateMetadata.isDisabled
+                    : currentPackage?.isDisabled;
+            updateMetadata.isMandatory =
+                typeof updateMetadata?.isMandatory === 'boolean'
+                    ? updateMetadata.isMandatory
+                    : currentPackage?.isMandatory;
+            updateMetadata.label = currentPackage?.label;
+            updateMetadata.packageHash = updateMetadata?.packageHash || currentPackage?.packageHash;
+            updateMetadata.rollout = updateMetadata?.rollout || currentPackage?.rollout;
+            const requestBody = JSON.stringify({ package: updateMetadata });
+            return this.patch(urlEncode([`/apps/${appName}/deployments/${deploymentName}/package/${currentPackage?.id}`]), requestBody, 
+            /*expectResponseBody=*/ false).then(() => null);
+        });
     }
     promote(appName, sourceDeploymentName, destinationDeploymentName, updateMetadata) {
         const requestBody = JSON.stringify({ packageInfo: updateMetadata });

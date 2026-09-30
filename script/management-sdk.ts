@@ -347,9 +347,7 @@ class AccountManager {
   }
 
   public getDeploymentHistory(appName: string, deploymentName: string): Promise<Package[]> {
-    return this.get(urlEncode([`/apps/${appName}/deployments/${deploymentName}/history`])).then(
-      (res: JsonResponse) => res.body.history
-    );
+    return this.get(urlEncode([`/apps/${appName}/deployments/${deploymentName}`])).then((res: JsonResponse) => res.body.history);
   }
 
   public release(
@@ -425,13 +423,38 @@ class AccountManager {
   }
 
   public patchRelease(appName: string, deploymentName: string, label: string, updateMetadata: PackageInfo): Promise<void> {
-    updateMetadata.label = label;
-    const requestBody: string = JSON.stringify({ packageInfo: updateMetadata });
-    return this.patch(
-      urlEncode([`/apps/${appName}/deployments/${deploymentName}/release`]),
-      requestBody,
+    return this.getDeploymentHistory(appName,deploymentName).then((history: Package[]) => {
+      var currentPackage = history?.[0];
+      if (label) {
+        currentPackage = history?.find(item => item.label === label);
+      }
+      updateMetadata.appVersion = updateMetadata?.appVersion || currentPackage?.appVersion;
+      updateMetadata.description = updateMetadata?.description || currentPackage?.description;
+      updateMetadata.diffEnabled =
+        typeof updateMetadata?.diffEnabled === 'boolean'
+          ? updateMetadata.diffEnabled
+          : currentPackage?.diffEnabled;
+
+      updateMetadata.isDisabled =
+        typeof updateMetadata?.isDisabled === 'boolean'
+          ? updateMetadata.isDisabled
+          : currentPackage?.isDisabled;
+
+      updateMetadata.isMandatory =
+        typeof updateMetadata?.isMandatory === 'boolean'
+          ? updateMetadata.isMandatory
+          : currentPackage?.isMandatory;
+
+      updateMetadata.label = currentPackage?.label;
+      updateMetadata.packageHash = updateMetadata?.packageHash || currentPackage?.packageHash;
+      updateMetadata.rollout = updateMetadata?.rollout || currentPackage?.rollout;
+      const requestBody: string = JSON.stringify({ package: updateMetadata });
+      return this.patch(
+        urlEncode([`/apps/${appName}/deployments/${deploymentName}/package/${currentPackage?.id}`]),
+        requestBody,
       /*expectResponseBody=*/ false
-    ).then(() => null);
+      ).then(() => null);
+    });
   }
 
   public promote(

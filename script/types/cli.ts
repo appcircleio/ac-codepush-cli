@@ -152,9 +152,9 @@ export interface IPackageInfo {
 
 export interface IPatchCommand extends ICommand, IPackageInfo {
   appName: string;
-  appStoreVersion?: string;
   deploymentName: string;
   label: string;
+  diffEnabled?: boolean;
 }
 
 export interface IPromoteCommand extends ICommand, IPackageInfo {
@@ -163,6 +163,7 @@ export interface IPromoteCommand extends ICommand, IPackageInfo {
   sourceDeploymentName: string;
   destDeploymentName: string;
   noDuplicateReleaseError?: boolean;
+  diffEnabled?: boolean;
 }
 
 export interface IRegisterCommand extends ICommand {

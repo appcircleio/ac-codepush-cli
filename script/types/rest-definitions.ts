@@ -120,12 +120,15 @@ export interface AppCreationRequest extends App {
   manuallyProvisionDeployments?: boolean;
 }
 
+
 /*inout*/
 export interface Deployment {
   /*generated key*/ key?: string;
   /*key*/ name: string;
   /*generated*/ package?: Package;
+  /*generated*/ metrics?: DeploymentMetrics[];
 }
+
 
 /*out*/
 export interface DeploymentKey {
@@ -154,6 +157,7 @@ export interface Package extends PackageInfo {
   /*generated*/ releaseMethod?: string; // "Upload", "Promote" or "Rollback". Unknown if unspecified
   /*generated*/ size: number;
   /*generated*/ uploadTime: number;
+  /*generated*/ id: string;
 }
 
 export * from "./rest-definitions";
