@@ -1002,13 +1002,23 @@ const releaseReact = (command) => {
         .then(() => deleteFolder(`${os.tmpdir()}/react-*`))
         .then(() => (0, exports.runReactNativeBundleCommand)(bundleName, command.development || false, entryFile, outputFolder, platform, command.sourcemapOutput))
         .then(async () => {
-        const isHermesEnabled = command.useHermes ||
-            (platform === "android" && (await (0, react_native_utils_1.getAndroidHermesEnabled)(command.gradleFile))) || // Check if we have to run hermes to compile JS to Byte Code if Hermes is enabled in build.gradle and we're releasing an Android build
-            (platform === "ios" && (await (0, react_native_utils_1.getiOSHermesEnabled)(command.podFile))); // Check if we have to run hermes to compile JS to Byte Code if Hermes is enabled in Podfile and we're releasing an iOS build
-        if (isHermesEnabled) {
-            (0, exports.log)(chalk.cyan("\nRunning hermes compiler...\n"));
-            await (0, react_native_utils_1.runHermesEmitBinaryCommand)(bundleName, outputFolder, command.sourcemapOutput, command.extraHermesFlags, command.gradleFile);
+        const decision = await (0, react_native_utils_1.getHermesDecision)(platform, command.useHermes, command.gradleFile, command.podFile);
+        (0, exports.log)(chalk.cyan(`\nHermes: ${decision.enabled ? "enabled" : "disabled"} - ${decision.reason}\n`));
+        if (!decision.enabled) {
+            return;
         }
+        const lookup = await (0, react_native_utils_1.findHermesCommand)(platform, command.gradleFile);
+        if (!lookup.command) {
+            const notFound = `The Hermes compiler (hermesc) was not found. Searched:\n  ${lookup.searched.join("\n  ")}`;
+            if (decision.forced) {
+                throw new Error(`${notFound}\nInstall the Hermes compiler that matches the project's react-native version (the hermes-compiler package on react-native 0.83 and newer), or pass "--useHermes false" to release a plain JavaScript bundle.`);
+            }
+            (0, exports.log)(chalk.yellow(`\nWARNING: ${notFound}\nReleasing the plain JavaScript bundle instead; the app will compile it on every cold start.\n`));
+            return;
+        }
+        (0, exports.log)(chalk.cyan(`Using hermesc: ${lookup.command}`));
+        (0, exports.log)(chalk.cyan("\nRunning hermes compiler...\n"));
+        await (0, react_native_utils_1.runHermesEmitBinaryCommand)(bundleName, outputFolder, command.sourcemapOutput, command.extraHermesFlags, lookup.command);
     })
         .then(async () => {
         if (command.privateKeyPath) {

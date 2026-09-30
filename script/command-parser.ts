@@ -636,9 +636,10 @@ yargs
       })
       .option("useHermes", {
         alias: "h",
-        default: false,
+        default: undefined,
         demand: false,
-        description: "Enable hermes and bypass automatic checks",
+        description:
+          "Force the Hermes compiler on (--useHermes) or off (--useHermes false). When omitted, Hermes is detected from the project: build.gradle / gradle.properties on Android, Podfile on iOS.",
         type: "boolean",
       })
       .option("podFile", {
