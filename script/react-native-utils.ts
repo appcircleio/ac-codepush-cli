@@ -11,6 +11,15 @@ export function isValidVersion(version: string): boolean {
   return !!valid(version) || /^\d+\.\d+$/.test(version);
 }
 
+// hermesc options that control warnings: -w[=<bool>], -W<option> (for example -Werror, -Wno-<category>)
+// and -max-diagnostic-width[=<n>]. hermesc also accepts these options with two leading dashes.
+function setsHermesWarningOption(flags: string[]): boolean {
+  return flags.some((flag) => {
+    const value = String(flag).replace(/^--/, "-");
+    return value === "-w" || value.startsWith("-w=") || value.startsWith("-W") || value.startsWith("-max-diagnostic-width");
+  });
+}
+
 export async function runHermesEmitBinaryCommand(
     bundleName: string,
     outputFolder: string,
@@ -20,18 +29,25 @@ export async function runHermesEmitBinaryCommand(
 ): Promise<void> {
   const hermesArgs: string[] = [];
   const envNodeArgs: string = process.env.CODE_PUSH_NODE_ARGS;
+  const envArgs: string[] = typeof envNodeArgs !== "undefined" ? envNodeArgs.trim().split(/\s+/) : [];
 
-  if (typeof envNodeArgs !== "undefined") {
-    Array.prototype.push.apply(hermesArgs, envNodeArgs.trim().split(/\s+/));
-  }
+  Array.prototype.push.apply(hermesArgs, envArgs);
 
   Array.prototype.push.apply(hermesArgs, [
     "-emit-binary",
     "-out",
     path.join(outputFolder, bundleName + ".hbc"),
     path.join(outputFolder, bundleName),
-    ...extraHermesFlags,
   ]);
+
+  // hermesc prints each warning with the minified bundle line, which can be some hundred KB in total.
+  // A large stderr can block the caller (BE-10292), so warnings are off unless the user sets a warning option.
+  // The React Native Android build also passes -w. Errors are not affected.
+  if (!setsHermesWarningOption([...envArgs, ...extraHermesFlags])) {
+    hermesArgs.push("-w");
+  }
+
+  Array.prototype.push.apply(hermesArgs, extraHermesFlags);
 
   if (sourcemapOutput) {
     hermesArgs.push("-output-source-map");

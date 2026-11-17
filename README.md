@@ -502,6 +502,8 @@ _NOTE: This parameter can be set using either --podfile or -pod_
 
 Hermes flags which will be passed to Hermes compiler.
 
+By default, the CLI passes `-w` to the Hermes compiler, so that it does not print warnings. Errors are still printed. The React Native Android build also uses `-w`. To see the warnings, set a warning option yourself, for example `--extraHermesFlags=-max-diagnostic-width=80`. The CLI does not add `-w` when you set one of these flags: `-w`, `-w=<true|false>`, `-W<option>` (for example `-Werror` or `-Wno-<category>`) or `-max-diagnostic-width=<n>`. One or two leading dashes are possible. `-Wno-<category>` is also a warning option, so the CLI does not add `-w`. The Hermes compiler then prints the warnings of all other categories. The warnings can be some hundred KB for one release.
+
 _NOTE: This parameter can be set using either --extraHermesFlags or -hf_
 
 #### Private key path parameter
