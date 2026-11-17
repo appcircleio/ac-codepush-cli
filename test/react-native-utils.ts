@@ -1,5 +1,7 @@
 import * as assert from "assert";
 import * as childProcess from "child_process";
+import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import * as rnUtils from "../script/react-native-utils";
 import {
@@ -383,5 +385,103 @@ describe("release-react --useHermes parsing", () => {
   it("--useHermes → true", () => assert.strictEqual(parseUseHermes("--useHermes"), "true"));
   it("--useHermes false → false", () => assert.strictEqual(parseUseHermes("--useHermes", "false"), "false"));
   it("--no-useHermes → false", () => assert.strictEqual(parseUseHermes("--no-useHermes"), "false"));
+});
+
+describe("runHermesEmitBinaryCommand hermesc arguments", function () {
+  // A fake hermesc writes its arguments to a file and creates the .hbc output.
+  // The fake is a "#!/usr/bin/env node" script, which spawn cannot run on Windows.
+  before(function () {
+    if (process.platform === "win32") this.skip();
+  });
+
+  let dir: string;
+  let fakeHermesc: string;
+  let argsFile: string;
+  const originalNodeArgs = process.env.CODE_PUSH_NODE_ARGS;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), "codepush-hermesc-args-"));
+    argsFile = path.join(dir, "args.json");
+    fakeHermesc = path.join(dir, "fake-hermesc.js");
+    fs.writeFileSync(
+      fakeHermesc,
+      "#!/usr/bin/env node\n" +
+        "const fs = require('fs');\n" +
+        "const args = process.argv.slice(2);\n" +
+        `fs.writeFileSync(${JSON.stringify(argsFile)}, JSON.stringify(args));\n` +
+        "fs.writeFileSync(args[args.indexOf('-out') + 1], 'hbc');\n"
+    );
+    fs.chmodSync(fakeHermesc, 0o755);
+    fs.writeFileSync(path.join(dir, "main.jsbundle"), "var a = 1;\n");
+    delete process.env.CODE_PUSH_NODE_ARGS;
+  });
+
+  afterEach(() => {
+    if (originalNodeArgs === undefined) {
+      delete process.env.CODE_PUSH_NODE_ARGS;
+    } else {
+      process.env.CODE_PUSH_NODE_ARGS = originalNodeArgs;
+    }
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  async function hermescArgs(extraHermesFlags: string[]): Promise<string[]> {
+    await rnUtils.runHermesEmitBinaryCommand("main.jsbundle", dir, undefined, extraHermesFlags, fakeHermesc);
+    return JSON.parse(fs.readFileSync(argsFile, "utf8"));
+  }
+
+  it("passes -w to hermesc by default, so that hermesc warnings do not fill stderr", async () => {
+    const args = await hermescArgs([]);
+    assert.deepStrictEqual(args, [
+      "-emit-binary",
+      "-out",
+      path.join(dir, "main.jsbundle.hbc"),
+      path.join(dir, "main.jsbundle"),
+      "-w",
+    ]);
+  });
+
+  const warningOptions: string[][] = [
+    ["-max-diagnostic-width=80"],
+    ["--max-diagnostic-width=80"],
+    ["-Wundefined-variable"],
+    ["-Wno-undefined-variable"],
+    ["-Werror"],
+    ["--Werror"],
+    ["-w"],
+    ["--w"],
+    ["-w=false"],
+  ];
+  for (const flags of warningOptions) {
+    it(`does not add -w when extraHermesFlags sets a warning option (${flags.join(" ")})`, async () => {
+      const args = await hermescArgs(flags);
+      assert.deepStrictEqual(args.slice(4), flags);
+    });
+  }
+
+  it("does not add -w when the warning option value is a separate number (yargs array)", async () => {
+    const args = await hermescArgs(["-max-diagnostic-width", 80 as unknown as string]);
+    assert.deepStrictEqual(args.slice(4), ["-max-diagnostic-width", "80"]);
+  });
+
+  it("does not add -w when CODE_PUSH_NODE_ARGS already contains -w", async () => {
+    process.env.CODE_PUSH_NODE_ARGS = "-w";
+    const args = await hermescArgs([]);
+    assert.deepStrictEqual(args.filter((arg) => arg === "-w"), ["-w"]);
+  });
+
+  it("keeps CODE_PUSH_NODE_ARGS first, then -w, then the user flags", async () => {
+    process.env.CODE_PUSH_NODE_ARGS = " --max-old-space-size=4096 ";
+    const args = await hermescArgs(["-O"]);
+    assert.deepStrictEqual(args, [
+      "--max-old-space-size=4096",
+      "-emit-binary",
+      "-out",
+      path.join(dir, "main.jsbundle.hbc"),
+      path.join(dir, "main.jsbundle"),
+      "-w",
+      "-O",
+    ]);
+  });
 });
 });

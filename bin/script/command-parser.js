@@ -563,7 +563,7 @@ yargs
         alias: "hf",
         default: [],
         demand: false,
-        description: "Flags that get passed to Hermes, JavaScript to bytecode compiler. Can be specified multiple times.",
+        description: "Flags that get passed to Hermes, JavaScript to bytecode compiler. Can be specified multiple times. The CLI adds -w (no warnings) unless one of these flags sets a warning option (-w, -W..., -max-diagnostic-width=...).",
         type: "array",
     })
         .option("privateKeyPath", {
